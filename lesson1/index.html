@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アンガーログ（怒りの記録）</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        /* Range Slider Customization */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #0d9488; /* teal-600 */
+            margin-top: -4px;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            background: #e7e5e4; /* stone-200 */
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-700 relative min-h-screen">
+
+    <!-- Main App Content -->
+    <div id="appContent" class="pb-20">
+
+        <!-- Toast Notification -->
+        <div id="toast" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-teal-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-opacity duration-300 opacity-0">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span class="font-bold">処理が完了しました</span>
+        </div>
+
+        <!-- Delete Modal -->
+        <div id="deleteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <div class="flex items-center gap-3 text-rose-600 mb-4">
+                    <div class="bg-rose-100 p-2 rounded-full">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold">記録を削除しますか？</h3>
+                </div>
+                <p class="text-stone-600 mb-6">
+                    この操作は取り消せません。本当にこの記録を削除してもよろしいですか？
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeModal('deleteModal')" class="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors font-bold">キャンセル</button>
+                    <button onclick="confirmDelete()" class="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 rounded-lg transition-colors font-bold flex items-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        削除する
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management Modal -->
+        <div id="dataManagerModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 flex flex-col h-[85vh]">
+                <div class="flex items-center justify-between mb-4 border-b pb-2">
+                    <div class="flex items-center gap-2 text-teal-800">
+                        <i data-lucide="settings" class="w-6 h-6"></i>
+                        <h3 class="text-lg font-bold">データ管理</h3>
+                    </div>
+                    <button onclick="closeModal('dataManagerModal')" class="text-stone-400 hover:text-stone-600">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-4 bg-stone-100 p-1 rounded-lg overflow-x-auto">
+                    <button onclick="switchTab('csv')" id="tab-csv" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md bg-white shadow-sm text-teal-700 transition-all">CSV出力</button>
+                    <button onclick="switchTab('backup')" id="tab-backup" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md text-stone-500 hover:bg-white/50 transition-all">バックアップ</button>
+                    <button onclick="switchTab('restore')" id="tab-restore" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md text-stone-500 hover:bg-white/50 transition-all">復元</button>
+                </div>
+                
+                <!-- Tab Contents -->
+                <div class="flex-1 overflow-hidden flex flex-col relative">
+                    
+                    <!-- CSV Tab -->
+                    <div id="content-csv" class="flex-1 flex flex-col gap-2">
+                        <p class="text-sm text-stone-500">
+                            データをExcelやGoogleスプレッドシートで分析するための形式です。<br>
+                            <span class="text-xs text-stone-400">※このデータを使って復元することはできません。</span>
+                        </p>
+                        <textarea id="csvArea" class="flex-1 w-full p-4 font-mono text-xs bg-slate-50 text-slate-600 rounded-lg resize-none outline-none border border-stone-200 focus:ring-2 focus:ring-teal-500" readonly></textarea>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="copyText('csvArea')" class="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-teal-700">
+                                <i data-lucide="copy" class="w-4 h-4"></i> コピー
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Backup Tab -->
+                    <div id="content-backup" class="hidden flex-1 flex flex-col gap-2">
+                        <p class="text-sm text-stone-500">
+                            <strong>【重要】</strong> 全データを保存するためのコードです。<br>
+                            このテキストをコピーして、メモ帳などに大切に保管してください。データが消えた際に「復元」タブで使用します。
+                        </p>
+                        <textarea id="backupArea" class="flex-1 w-full p-4 font-mono text-xs bg-slate-800 text-green-400 rounded-lg resize-none outline-none focus:ring-2 focus:ring-teal-500" readonly></textarea>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="copyText('backupArea')" class="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-teal-700">
+                                <i data-lucide="copy" class="w-4 h-4"></i> バックアップコードをコピー
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Restore Tab -->
+                    <div id="content-restore" class="hidden flex-1 flex flex-col gap-2">
+                        <div class="bg-rose-50 border border-rose-100 p-3 rounded-lg mb-2">
+                            <p class="text-xs text-rose-600 font-bold flex items-center gap-1">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> 注意
+                            </p>
+                            <p class="text-xs text-rose-800 mt-1">
+                                データを復元すると、現在ブラウザに保存されているデータはすべて上書きされます。<br>
+                                必ずバックアップコードを貼り付けてください。
+                            </p>
+                        </div>
+                        <textarea id="restoreArea" class="flex-1 w-full p-4 font-mono text-xs bg-white text-stone-800 rounded-lg resize-none outline-none border-2 border-dashed border-stone-300 focus:border-teal-500 focus:ring-0" placeholder="ここにバックアップコード（JSON）を貼り付けてください..."></textarea>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="executeRestore()" class="px-6 py-2 bg-rose-500 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-rose-600">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> データを復元する
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="bg-white shadow-sm sticky top-0 z-10 border-b border-stone-200">
+            <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="book-open" class="text-teal-600"></i>
+                    <h1 class="text-xl font-bold text-stone-800">アンガーログ</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openDataManager()" class="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-bold bg-teal-50 border border-teal-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="settings" class="w-3 h-3"></i>
+                        データ管理
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-3xl mx-auto px-4 py-6 space-y-8">
+            
+            <!-- Intro Card -->
+            <div class="bg-teal-50 border border-teal-100 rounded-xl p-6">
+                <h2 class="flex items-center gap-2 font-bold text-teal-800 mb-2">
+                    <i data-lucide="wind" class="w-5 h-5"></i>
+                    心の天気図
+                </h2>
+                <p class="text-sm text-teal-900 leading-relaxed">
+                    アンガーログは、あなたの「心の天気図」です。記録を積み重ねることで、どんな時に「低気圧（怒り）」が発生しやすいかを知り、適切な「雨具（対処法）」を準備できるようになります。
+                </p>
+            </div>
+
+            <!-- Form Section -->
+            <form id="logForm" class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                <div class="p-4 bg-stone-100 border-b border-stone-200 font-bold text-stone-700 flex items-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5 text-teal-600"></i>
+                    新しい記録を作成
+                </div>
+                
+                <div class="p-6 space-y-8">
+                    <!-- Step 1: Basic Info -->
+                    <section class="space-y-4">
+                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
+                            1. 基本的な記録（その場で）
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">日時</label>
+                                <input type="datetime-local" id="dateTime" required class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">場所</label>
+                                <input type="text" id="place" required placeholder="例：オフィス、自宅のリビング" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 mb-1">
+                                対象となる人
+                                <span class="ml-2 text-xs text-stone-400 font-normal">(任意)</span>
+                            </label>
+                            <input type="text" id="targetPerson" placeholder="例：上司、パートナー、店員" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 mb-1">
+                                出来事（客観的な事実）
+                                <span class="ml-2 text-xs text-stone-400 font-normal">※カメラで撮ったように事実のみ</span>
+                            </label>
+                            <textarea id="event" rows="3" required placeholder="例：上司に〇〇という資料のミスを指摘された。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 mb-1">
+                                思ったこと（主観的な思考）
+                                <span class="ml-2 text-xs text-stone-400 font-normal">※瞬間に浮かんだ解釈</span>
+                            </label>
+                            <textarea id="thought" rows="2" placeholder="例：また私ばかり責められている。みんなの前で言わなくてもいいのに。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 mb-2 flex justify-between">
+                                <span>怒りの強さ (1-10)</span>
+                                <span id="intensityLabel" class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Level: 5</span>
+                            </label>
+                            <input type="range" id="intensity" min="0" max="10" value="5" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-stone-400 mt-1">
+                                <span>平穏</span>
+                                <span>激怒</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="border-stone-100">
+
+                    <!-- Step 2: Reaction -->
+                    <section class="space-y-4">
+                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4"></i> 2. 反応と行動
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">身体的反応</label>
+                                <input type="text" id="bodyReaction" placeholder="例：心臓がドキドキした、顔が熱くなった" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">言動（取った行動）</label>
+                                <input type="text" id="actionTaken" placeholder="例：黙り込んだ、言い返した" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="border-stone-100">
+
+                    <!-- Step 3: Analysis -->
+                    <section class="space-y-4">
+                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="brain" class="w-4 h-4"></i> 3. 深掘りと分析（落ち着いてから）
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">本当はしてほしかったこと（願望）</label>
+                                <input type="text" id="desire" placeholder="例：個別に静かに指摘してほしかった。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">怒りの裏にある感情（一次感情）</label>
+                                <input type="text" id="primaryEmotion" placeholder="例：悲しみ、恥ずかしさ" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">信念・価値観（「べき」ログ）</label>
+                                <input type="text" id="coreBelief" placeholder="例：人前で恥をかかせるべきではない" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
+                            </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-stone-600 mb-1">振り返りと改善点</label>
+                                <textarea id="improvement" rows="2" placeholder="例：次は「場所を変えて話せませんか」と提案してみる。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="p-4 bg-stone-50 border-t border-stone-200 flex justify-end">
+                    <button type="submit" class="flex items-center gap-2 bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors font-bold shadow-sm">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        ログを記録する
+                    </button>
+                </div>
+            </form>
+
+            <!-- Logs List -->
+            <section class="space-y-4">
+                <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+                    <h2 class="text-xl font-bold text-stone-700">過去の記録</h2>
+                </div>
+                
+                <div id="logsContainer" class="space-y-4">
+                    <!-- Logs will be injected here -->
+                    <div class="text-center py-10 bg-white rounded-xl border border-stone-200 border-dashed text-stone-400">
+                        読み込み中...
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Toggle Button -->
+            <div class="pt-10 pb-10">
+                <button onclick="toggleFaq()" id="faqToggleBtn" class="w-full bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    <span>アンガーログ FAQ（よくある質問）</span>
+                    <i data-lucide="chevron-down" class="w-4 h-4" id="faqChevron"></i>
+                </button>
+
+                <!-- FAQ Content -->
+                <div id="faqContent" class="hidden mt-6 space-y-6 bg-white p-6 rounded-xl border border-stone-200 shadow-sm transition-all duration-300">
+                    <div class="bg-teal-600 text-white p-4 rounded-lg mb-6">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                            アンガーログ有効活用のためのFAQ
+                        </h3>
+                        <p class="text-teal-100 text-sm mt-1">
+                            出典に基づいた具体的な手法と理論
+                        </p>
+                    </div>
+                    
+                    <div id="faqItemsContainer" class="space-y-6">
+                        <!-- FAQ Items will be injected here -->
+                    </div>
+
+                    <div class="bg-stone-100 p-4 rounded-lg text-stone-600 text-sm text-center italic mt-6">
+                        アンガーログは、いわば「感情のドライブレコーダー」です。万が一の衝突（怒り）が起きた際、何が原因で、自分はどう反応したのかを正確に振り返ることで、次はより安全に、より自分らしい道を運転できるようになります。
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    // --- Data & State ---
+    let logs = [];
+    let deleteTargetId = null;
+    const STORAGE_KEY_LOGS = 'angerLog_data';
+
+    // --- FAQ Data ---
+    const faqData = [
+        {
+            category: "【基礎知識】アンガーログとは何か",
+            items: [
+                { q: "アンガーログとは何ですか？", a: "日常で感じた怒りの感情、その時の状況、思考、反応などを客観的に記録する手法です。認知行動療法の「セルフモニタリング」を基盤としています。" },
+                { q: "アンガーログをつける最大のメリットは何ですか？", a: "自分の「怒りのパターンや傾向」を可視化でき、感情に対するメタ認知能力（自分を客観的に見る力）が向上することです。" },
+                { q: "怒りは我慢すべきではないのですか？", a: "アンガーマネジメントは怒りを抑え込むことではなく、「怒る必要があること」と「ないこと」を区別し、建設的に表現することを目指します。無理な抑制は心身の健康を損なうリスクがあります。" }
+            ]
+        },
+        {
+            category: "【書き方のコツ】効果的な記録方法",
+            items: [
+                { q: "記録すべき基本項目は何ですか？", a: "「日時」「場所」「出来事（事実）」「思ったこと」「怒りの強さ」の5点が基本です。" },
+                { q: "出来事はどのように書くのが正解ですか？", a: "第三者がビデオカメラで撮影したかのように、客観的な事実のみを記述します。" },
+                { q: "記録はいつ書くのが最も効果的ですか？", a: "怒りを感じた直後（その場）に書くのが理想です。時間が経つと記憶が曖昧になり、自分の都合よく解釈してしまうためです。" },
+                { q: "怒りの強さを数値化（スケーリング）する意味は？", a: "0〜10（または100）の数値で表すことで、「自分は常に最大レベルで怒っているわけではない」というグラデーションを理解でき、冷静さを取り戻しやすくなります。" },
+                { q: "身体的反応を記録するのはなぜですか？", a: "動悸や筋肉の緊張など、怒りの前兆（サイン）を早期に察知し、爆発前に対処できるようにするためです。" },
+                { q: "「してほしかったこと（本音）」を書く利点は？", a: "怒りの裏にある自分の期待や願望を明確にすることで、具体的な解決策（リクエスト）を見出しやすくなります。" }
+            ]
+        },
+        {
+            category: "【分析と活用】記録をどう役立てるか",
+            items: [
+                { q: "つけたログはいつ読み返すべきですか？", a: "直後は怒りが再燃する可能性があるため、5日〜1週間ほど経って心が安定している時に振り返るのが推奨されます。" },
+                { q: "怒りの背後にある「一次感情」とは何ですか？", a: "怒りは「二次感情」であり、その根底には不安、悲しみ、落胆、寂しさなどの「一次感情」が隠れています。これを特定することが自己理解の鍵です。" },
+                { q: "「べきログ」とは何ですか？", a: "自分の譲れない価値観（コアビリーフ）を整理する記録です。「〜すべき」という自分のマイルールを特定し、その許容範囲を広げるために使います。" },
+                { q: "自分の怒りのタイプを知る方法は？", a: "ログを継続すると、特定の傾向（公明正大、博学多才、威風堂々など）が見えてきます。自分の「怒りのスイッチ」を知ることで、事前に対策を立てられます。" },
+                { q: "アンガーログで職場の人間関係は改善しますか？", a: "自分の感情を客観視し、相手を攻撃するのではなく「Iメッセージ（私は〜と感じた）」で要望を伝えられるようになるため、コミュニケーションが円滑になります。" }
+            ]
+        },
+        {
+            category: "【応用テクニック】さらに有効利用するために",
+            items: [
+                { q: "怒りが強すぎて書くどころではない時は？", a: "まず「6秒ルール」を使い、深呼吸や数を数えることで理性が働く時間を稼いでから、ログの作成に取りかかります。" },
+                { q: "職場での「ハラスメント防止」にどう役立ちますか？", a: "リーダー層がログを活用して自分の感情を数値化することで、感情に任せた叱責が招く「負のコスト」を冷静に判断できるようになります。" },
+                { q: "アプリ（例：おこノート）を使うメリットは？", a: "頻出キーワードから「アンガーマップ」を自動生成したり、曜日や時間帯ごとの怒りの割合をグラフ化して視覚的に分析できる点です。" },
+                { q: "「ハッピーログ」も併用すべきですか？", a: "はい。幸福な出来事も記録することで、認知のバイアスを修正し、ポジティブな側面にも目を向けられるようになります。" },
+                { q: "「タイムアウト」とログの関係は？", a: "激しい怒りを感じた時に一度その場を離れる（タイムアウト）ことで、冷静にログを書くための環境と時間を確保できます。" },
+                { q: "「グラウンディング」をログにどう活かす？", a: "怒りを感じた瞬間に周囲の物の色や形を観察してログにメモする行為自体が、意識を怒りから逸らす効果的な訓練になります。" }
+            ]
+        },
+        {
+            category: "【モチベーションと継続】挫折しないために",
+            items: [
+                { q: "ログを書くのが面倒で続きません。", a: "最初は数値と数単語だけの「マイクロ・ジャーナリング」から始め、記録する筋肉を育てる意識が重要です。" },
+                { q: "全ての怒りを記録しなければなりませんか？", a: "完璧主義は挫折の元です。まずは小さなイライラ（数値2〜3程度）から取り上げてみるのが継続のコツです。" },
+                { q: "ログを人に見られるのが不安です。", a: "パスワード機能付きのアプリや、鍵付きのノートを使用し、プライバシーを確保して正直に書ける環境を作りましょう。" },
+                { q: "怒りを感じる自分を責めてしまいます。", a: "怒りは自分を守るための自然な「生存メカニズム（危険信号）」です。ログは自分を責めるためではなく、理解するためのツールだと捉えてください。" },
+                { q: "ログを書き続けても問題が解決しない場合は？", a: "自分で変えられないこと（天候や他人の性格など）に執着していないか確認し、「自分が変えられる行動」にフォーカスして対処策を練り直します。" },
+                { q: "「隠された怒り」をログで見つけるには？", a: "過度の飲食や原因不明の体調不良がある時、その前後に起きた出来事を記録すると、無意識に抑圧していた怒りが浮き彫りになることがあります。" },
+                { q: "ログで「相手の事情」を推測する意味は？", a: "相手が「なぜそうしたか」を推測・確認することで、自分の思い込みが解消され、怒りの数値が激減することが多々あります。" },
+                { q: "ライフステージが変わると怒りの傾向も変わりますか？", a: "はい。子育て中や責任ある職務への昇進など、環境に応じてストレス源は変化します。定期的にログを見直すことで、今の自分に必要なケアが分かります。" },
+                { q: "ログを共有してもいいですか？", a: "信頼できるパートナーやカウンセラーと共有することで、客観的なフィードバックを得られ、モチベーションの維持に繋がります。" },
+                { q: "アンガーログを卒業するタイミングは？", a: "ログを書かなくても自分の感情を冷静にモニタリングし、適切に対処できるようになれば一つのゴールですが、「心の健康診断」として習慣化し続けるのが理想的です。" }
+            ]
+        }
+    ];
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init Date
+        resetFormDate();
+        // Init Icons
+        lucide.createIcons();
+        // Init FAQ
+        renderFaq();
+        // Load Logs
+        loadLogs();
+        // Init Slider Listener
+        const slider = document.getElementById('intensity');
+        const label = document.getElementById('intensityLabel');
+        slider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            label.textContent = `Level: ${val}`;
+            label.className = `px-2 py-0.5 rounded text-xs font-bold ${getIntensityColorClass(val)}`;
+        });
+        // Init Form Submit
+        document.getElementById('logForm').addEventListener('submit', handleFormSubmit);
+    });
+
+    // --- Storage Functions ---
+    function saveLogs() {
+        // Try to save to local storage
+        try {
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+        } catch(e) {
+            console.warn("Storage warning: ", e);
+            alert("ブラウザの保存領域が不足しているか、制限されています。データが保存されない可能性があります。");
+        }
+    }
+
+    function loadLogs() {
+        const storedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
+        if (storedLogs) {
+            try {
+                logs = JSON.parse(storedLogs);
+            } catch (e) {
+                console.error("Failed to load logs", e);
+                logs = [];
+            }
+        }
+        renderLogs();
+    }
+
+
+    // --- Core Functions ---
+
+    function resetFormDate() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('dateTime').value = now.toISOString().slice(0, 16);
+    }
+
+    function getIntensityColorClass(level) {
+        if (level <= 3) return 'bg-sky-100 text-sky-800';
+        if (level <= 7) return 'bg-amber-100 text-amber-800';
+        return 'bg-rose-100 text-rose-800';
+    }
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const newLog = {
+            id: Date.now(),
+            dateTime: document.getElementById('dateTime').value,
+            place: document.getElementById('place').value,
+            targetPerson: document.getElementById('targetPerson').value,
+            event: document.getElementById('event').value,
+            thought: document.getElementById('thought').value,
+            intensity: document.getElementById('intensity').value,
+            bodyReaction: document.getElementById('bodyReaction').value,
+            actionTaken: document.getElementById('actionTaken').value,
+            desire: document.getElementById('desire').value,
+            primaryEmotion: document.getElementById('primaryEmotion').value,
+            coreBelief: document.getElementById('coreBelief').value,
+            improvement: document.getElementById('improvement').value
+        };
+
+        logs.unshift(newLog); // Add to top
+        saveLogs(); // Save to storage
+        renderLogs();
+        
+        // Reset form except date
+        e.target.reset();
+        resetFormDate();
+        document.getElementById('intensityLabel').textContent = "Level: 5";
+        document.getElementById('intensityLabel').className = "px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800";
+
+        showToast();
+    }
+
+    function renderLogs() {
+        const container = document.getElementById('logsContainer');
+        
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-10 bg-white rounded-xl border border-stone-200 border-dashed text-stone-400">
+                    まだ記録がありません。
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = logs.map(log => {
+            const dateStr = new Date(log.dateTime).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit', weekday: 'short' });
+            
+            return `
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-stone-200 transition-all hover:shadow-md">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="px-2 py-1 rounded-md text-sm font-bold ${getIntensityColorClass(log.intensity)}">
+                            Lv.${log.intensity}
+                        </span>
+                        <div class="text-sm text-stone-500 font-medium flex flex-wrap gap-2 items-center">
+                            <span>${dateStr}</span>
+                            <span class="text-stone-300">|</span>
+                            <span>@${escapeHtml(log.place)}</span>
+                            ${log.targetPerson ? `<span class="text-stone-300">|</span><span class="flex items-center gap-1 text-stone-600"><i data-lucide="user" class="w-3 h-3"></i>${escapeHtml(log.targetPerson)}</span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="requestDelete(${log.id})" class="text-stone-400 hover:text-rose-500 transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-stone-50 p-3 rounded-lg">
+                        <p class="text-xs text-stone-500 font-bold mb-1">出来事（事実）</p>
+                        <p class="text-stone-700 text-sm whitespace-pre-wrap">${escapeHtml(log.event)}</p>
+                    </div>
+                    <div class="bg-teal-50 p-3 rounded-lg">
+                        <p class="text-xs text-teal-600 font-bold mb-1">思ったこと</p>
+                        <p class="text-teal-900 text-sm whitespace-pre-wrap">${escapeHtml(log.thought)}</p>
+                    </div>
+                </div>
+
+                ${(log.primaryEmotion || log.coreBelief) ? `
+                <div class="flex flex-wrap gap-2 text-xs">
+                    ${log.primaryEmotion ? `
+                    <span class="bg-rose-50 text-rose-700 px-2 py-1 rounded-full flex items-center gap-1 border border-rose-100">
+                        <i data-lucide="heart" class="w-3 h-3"></i> 裏の感情: ${escapeHtml(log.primaryEmotion)}
+                    </span>` : ''}
+                    ${log.coreBelief ? `
+                    <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-full flex items-center gap-1 border border-amber-100">
+                        <i data-lucide="brain" class="w-3 h-3"></i> 信念: ${escapeHtml(log.coreBelief)}
+                    </span>` : ''}
+                </div>` : ''}
+            </div>
+            `;
+        }).join('');
+
+        lucide.createIcons();
+    }
+
+    // --- Delete Logic ---
+    function requestDelete(id) {
+        deleteTargetId = id;
+        const modal = document.getElementById('deleteModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.firstElementChild.classList.add('scale-100'), 10);
+    }
+
+    function confirmDelete() {
+        if (deleteTargetId) {
+            logs = logs.filter(l => l.id !== deleteTargetId);
+            saveLogs();
+            deleteTargetId = null;
+            renderLogs();
+            closeModal('deleteModal');
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // --- Data Manager Logic ---
+    function openDataManager() {
+        // Load data for display
+        updateCSVDisplay();
+        updateBackupDisplay();
+
+        const modal = document.getElementById('dataManagerModal');
+        modal.classList.remove('hidden');
+        
+        switchTab('csv');
+    }
+
+    function switchTab(tabId) {
+        // Hide all contents
+        ['csv', 'backup', 'restore'].forEach(id => {
+            const el = document.getElementById(`content-${id}`);
+            const tab = document.getElementById(`tab-${id}`);
+            if(el) el.classList.add('hidden');
+            if(tab) {
+                tab.classList.remove('bg-white', 'shadow-sm', 'text-teal-700');
+                tab.classList.add('text-stone-500');
+            }
+        });
+        
+        // Show selected
+        document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        document.getElementById(`tab-${tabId}`).classList.add('bg-white', 'shadow-sm', 'text-teal-700');
+        document.getElementById(`tab-${tabId}`).classList.remove('text-stone-500');
+    }
+
+    function updateCSVDisplay() {
+        if (logs.length === 0) {
+            document.getElementById('csvArea').value = "データがありません";
+            return;
+        }
+        const header = ["日時", "場所", "相手", "強度(1-10)", "出来事", "思考", "身体反応", "行動", "願望", "一次感情", "信念", "改善策"];
+        const rows = logs.map(log => {
+            return [
+                log.dateTime.replace('T', ' '),
+                log.place,
+                log.targetPerson,
+                log.intensity,
+                log.event,
+                log.thought,
+                log.bodyReaction,
+                log.actionTaken,
+                log.desire,
+                log.primaryEmotion,
+                log.coreBelief,
+                log.improvement
+            ].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',');
+        }).join('\n');
+        document.getElementById('csvArea').value = header.join(',') + '\n' + rows;
+    }
+
+    function updateBackupDisplay() {
+        // Simple JSON backup
+        document.getElementById('backupArea').value = JSON.stringify(logs);
+    }
+    
+    async function copyText(elementId) {
+        const textArea = document.getElementById(elementId);
+        textArea.select();
+        textArea.setSelectionRange(0, 99999);
+        try {
+            await navigator.clipboard.writeText(textArea.value);
+            showToast(); // Reuse toast for success feedback
+        } catch (err) {
+            alert("コピーできませんでした。手動でコピーしてください。");
+        }
+    }
+
+    function executeRestore() {
+        const jsonStr = document.getElementById('restoreArea').value;
+        if(!jsonStr.trim()) {
+            alert("バックアップコードを入力してください。");
+            return;
+        }
+
+        try {
+            const restoredData = JSON.parse(jsonStr);
+            if(Array.isArray(restoredData)) {
+                if(confirm("現在のデータを上書きして復元しますか？この操作は元に戻せません。")) {
+                    logs = restoredData;
+                    saveLogs();
+                    renderLogs();
+                    closeModal('dataManagerModal');
+                    showToast();
+                }
+            } else {
+                alert("データの形式が正しくありません。");
+            }
+        } catch(e) {
+            alert("復元に失敗しました。コードが正しいか確認してください。");
+        }
+    }
+
+    // --- FAQ Logic ---
+    function renderFaq() {
+        const container = document.getElementById('faqItemsContainer');
+        container.innerHTML = faqData.map(category => `
+            <div class="space-y-4">
+                <h4 class="font-bold text-stone-700 border-l-4 border-teal-500 pl-3 py-1 bg-stone-50">
+                    ${category.category}
+                </h4>
+                <div class="space-y-4">
+                    ${category.items.map(item => `
+                        <div class="border-b border-stone-100 pb-4 last:border-0">
+                            <p class="font-bold text-teal-700 mb-2 flex items-start gap-2">
+                                <span class="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded mt-0.5">Q</span>
+                                ${item.q}
+                            </p>
+                            <p class="text-stone-600 text-sm leading-relaxed pl-8">
+                                ${item.a}
+                            </p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleFaq() {
+        const content = document.getElementById('faqContent');
+        const chevron = document.getElementById('faqChevron');
+        
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            chevron.setAttribute('data-lucide', 'chevron-up');
+        } else {
+            content.classList.add('hidden');
+            chevron.setAttribute('data-lucide', 'chevron-down');
+        }
+        lucide.createIcons();
+    }
+
+    // --- Utility ---
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        void toast.offsetWidth; 
+        toast.classList.remove('opacity-0');
+        
+        setTimeout(() => {
+            toast.classList.add('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 300);
+        }, 3000);
+    }
+</script>
+</body>
+</html>
