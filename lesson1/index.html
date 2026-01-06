@@ -3,738 +3,654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>アンガーログ（怒りの記録）</title>
+    <title>消防職員向け 長周期地震動対策 e-Learning</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
-        /* Range Slider Customization */
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #0d9488; /* teal-600 */
-            margin-top: -4px;
-            cursor: pointer;
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
         }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            background: #e7e5e4; /* stone-200 */
-            border-radius: 4px;
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        
+        /* Custom Colors based on "High Class" & Fire Dept theme */
+        .bg-fire-dark { background-color: #1a202c; } /* Dark base */
+        .bg-fire-red { background-color: #8B0000; } /* Deep Red */
+        .text-fire-red { color: #8B0000; }
+        .border-fire-red { border-color: #8B0000; }
+        
+        .bg-gold { background-color: #c5a059; } /* Muted Gold */
+        .text-gold { color: #c5a059; }
+        .border-gold { border-color: #c5a059; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B0000 0%, #600000 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+        }
+        
+        .card {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-top: 4px solid #8B0000;
+            transition: transform 0.2s;
+        }
+        
+        .option-label {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-radio:checked + .option-content {
+            background-color: #fff5f5;
+            border-color: #8B0000;
+            color: #8B0000;
+            font-weight: bold;
+        }
+        
+        /* Explanation Box Animation */
+        .explanation-box {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, opacity 0.5s ease;
+            opacity: 0;
+        }
+        .explanation-box.visible {
+            max-height: 500px; /* Arbitrary large height */
+            opacity: 1;
+            margin-top: 1rem;
+        }
+
+        /* Result Badge */
+        .badge-correct {
+            background-color: #10B981;
+            color: white;
+        }
+        .badge-incorrect {
+            background-color: #EF4444;
+            color: white;
         }
     </style>
 </head>
-<body class="bg-stone-50 text-stone-700 relative min-h-screen">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Main App Content -->
-    <div id="appContent" class="pb-20">
-
-        <!-- Toast Notification -->
-        <div id="toast" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-teal-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-opacity duration-300 opacity-0">
-            <i data-lucide="check-circle" class="w-5 h-5"></i>
-            <span class="font-bold">処理が完了しました</span>
-        </div>
-
-        <!-- Delete Modal -->
-        <div id="deleteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-                <div class="flex items-center gap-3 text-rose-600 mb-4">
-                    <div class="bg-rose-100 p-2 rounded-full">
-                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-bold">記録を削除しますか？</h3>
+    <!-- Header -->
+    <header class="bg-fire-dark text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-fire-extinguisher text-gold text-2xl"></i>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">長周期地震動対策 e-Learning</h1>
+                    <p class="text-xs text-gray-400">消防職員向け 特別教育資料</p>
                 </div>
-                <p class="text-stone-600 mb-6">
-                    この操作は取り消せません。本当にこの記録を削除してもよろしいですか？
-                </p>
-                <div class="flex justify-end gap-3">
-                    <button onclick="closeModal('deleteModal')" class="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors font-bold">キャンセル</button>
-                    <button onclick="confirmDelete()" class="px-4 py-2 bg-rose-500 text-white hover:bg-rose-600 rounded-lg transition-colors font-bold flex items-center gap-2">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        削除する
-                    </button>
-                </div>
+            </div>
+            <div class="hidden md:block">
+                <span class="text-gold serif italic">Professional Training Course</span>
             </div>
         </div>
+    </header>
 
-        <!-- Data Management Modal -->
-        <div id="dataManagerModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 flex flex-col h-[85vh]">
-                <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <div class="flex items-center gap-2 text-teal-800">
-                        <i data-lucide="settings" class="w-6 h-6"></i>
-                        <h3 class="text-lg font-bold">データ管理</h3>
-                    </div>
-                    <button onclick="closeModal('dataManagerModal')" class="text-stone-400 hover:text-stone-600">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-
-                <!-- Tabs -->
-                <div class="flex gap-2 mb-4 bg-stone-100 p-1 rounded-lg overflow-x-auto">
-                    <button onclick="switchTab('csv')" id="tab-csv" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md bg-white shadow-sm text-teal-700 transition-all">CSV出力</button>
-                    <button onclick="switchTab('backup')" id="tab-backup" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md text-stone-500 hover:bg-white/50 transition-all">バックアップ</button>
-                    <button onclick="switchTab('restore')" id="tab-restore" class="flex-1 min-w-[80px] py-2 text-sm font-bold rounded-md text-stone-500 hover:bg-white/50 transition-all">復元</button>
-                </div>
-                
-                <!-- Tab Contents -->
-                <div class="flex-1 overflow-hidden flex flex-col relative">
-                    
-                    <!-- CSV Tab -->
-                    <div id="content-csv" class="flex-1 flex flex-col gap-2">
-                        <p class="text-sm text-stone-500">
-                            データをExcelやGoogleスプレッドシートで分析するための形式です。<br>
-                            <span class="text-xs text-stone-400">※このデータを使って復元することはできません。</span>
-                        </p>
-                        <textarea id="csvArea" class="flex-1 w-full p-4 font-mono text-xs bg-slate-50 text-slate-600 rounded-lg resize-none outline-none border border-stone-200 focus:ring-2 focus:ring-teal-500" readonly></textarea>
-                        <div class="flex justify-end pt-2">
-                            <button onclick="copyText('csvArea')" class="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-teal-700">
-                                <i data-lucide="copy" class="w-4 h-4"></i> コピー
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Backup Tab -->
-                    <div id="content-backup" class="hidden flex-1 flex flex-col gap-2">
-                        <p class="text-sm text-stone-500">
-                            <strong>【重要】</strong> 全データを保存するためのコードです。<br>
-                            このテキストをコピーして、メモ帳などに大切に保管してください。データが消えた際に「復元」タブで使用します。
-                        </p>
-                        <textarea id="backupArea" class="flex-1 w-full p-4 font-mono text-xs bg-slate-800 text-green-400 rounded-lg resize-none outline-none focus:ring-2 focus:ring-teal-500" readonly></textarea>
-                        <div class="flex justify-end pt-2">
-                            <button onclick="copyText('backupArea')" class="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-teal-700">
-                                <i data-lucide="copy" class="w-4 h-4"></i> バックアップコードをコピー
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Restore Tab -->
-                    <div id="content-restore" class="hidden flex-1 flex flex-col gap-2">
-                        <div class="bg-rose-50 border border-rose-100 p-3 rounded-lg mb-2">
-                            <p class="text-xs text-rose-600 font-bold flex items-center gap-1">
-                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> 注意
-                            </p>
-                            <p class="text-xs text-rose-800 mt-1">
-                                データを復元すると、現在ブラウザに保存されているデータはすべて上書きされます。<br>
-                                必ずバックアップコードを貼り付けてください。
-                            </p>
-                        </div>
-                        <textarea id="restoreArea" class="flex-1 w-full p-4 font-mono text-xs bg-white text-stone-800 rounded-lg resize-none outline-none border-2 border-dashed border-stone-300 focus:border-teal-500 focus:ring-0" placeholder="ここにバックアップコード（JSON）を貼り付けてください..."></textarea>
-                        <div class="flex justify-end pt-2">
-                            <button onclick="executeRestore()" class="px-6 py-2 bg-rose-500 text-white rounded-lg font-bold flex items-center gap-2 hover:bg-rose-600">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> データを復元する
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+        
+        <!-- Intro / Welcome Section (Shown initially) -->
+        <div id="intro-section" class="text-center py-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 serif">確認テストを開始します</h2>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                提供された資料に基づき、全50問の中からランダムに10問が出題されます。<br>
+                自身の知識を確認し、業務に役立ててください。
+            </p>
+            <button onclick="startQuiz()" class="btn-primary px-8 py-4 rounded shadow-lg text-lg font-bold tracking-wider">
+                テストを開始する
+            </button>
         </div>
 
-        <!-- Header -->
-        <header class="bg-white shadow-sm sticky top-0 z-10 border-b border-stone-200">
-            <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="book-open" class="text-teal-600"></i>
-                    <h1 class="text-xl font-bold text-stone-800">アンガーログ</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="openDataManager()" class="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-bold bg-teal-50 border border-teal-100 px-3 py-1.5 rounded-lg transition-colors">
-                        <i data-lucide="settings" class="w-3 h-3"></i>
-                        データ管理
-                    </button>
-                </div>
-            </div>
-        </header>
+        <!-- Quiz Section (Hidden initially) -->
+        <div id="quiz-section" class="hidden space-y-8">
+            <!-- Questions will be injected here via JS -->
+            <div id="questions-container"></div>
 
-        <main class="max-w-3xl mx-auto px-4 py-6 space-y-8">
-            
-            <!-- Intro Card -->
-            <div class="bg-teal-50 border border-teal-100 rounded-xl p-6">
-                <h2 class="flex items-center gap-2 font-bold text-teal-800 mb-2">
-                    <i data-lucide="wind" class="w-5 h-5"></i>
-                    心の天気図
-                </h2>
-                <p class="text-sm text-teal-900 leading-relaxed">
-                    アンガーログは、あなたの「心の天気図」です。記録を積み重ねることで、どんな時に「低気圧（怒り）」が発生しやすいかを知り、適切な「雨具（対処法）」を準備できるようになります。
-                </p>
-            </div>
-
-            <!-- Form Section -->
-            <form id="logForm" class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-                <div class="p-4 bg-stone-100 border-b border-stone-200 font-bold text-stone-700 flex items-center gap-2">
-                    <i data-lucide="plus" class="w-5 h-5 text-teal-600"></i>
-                    新しい記録を作成
-                </div>
-                
-                <div class="p-6 space-y-8">
-                    <!-- Step 1: Basic Info -->
-                    <section class="space-y-4">
-                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
-                            1. 基本的な記録（その場で）
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">日時</label>
-                                <input type="datetime-local" id="dateTime" required class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">場所</label>
-                                <input type="text" id="place" required placeholder="例：オフィス、自宅のリビング" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-stone-600 mb-1">
-                                対象となる人
-                                <span class="ml-2 text-xs text-stone-400 font-normal">(任意)</span>
-                            </label>
-                            <input type="text" id="targetPerson" placeholder="例：上司、パートナー、店員" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-stone-600 mb-1">
-                                出来事（客観的な事実）
-                                <span class="ml-2 text-xs text-stone-400 font-normal">※カメラで撮ったように事実のみ</span>
-                            </label>
-                            <textarea id="event" rows="3" required placeholder="例：上司に〇〇という資料のミスを指摘された。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-stone-600 mb-1">
-                                思ったこと（主観的な思考）
-                                <span class="ml-2 text-xs text-stone-400 font-normal">※瞬間に浮かんだ解釈</span>
-                            </label>
-                            <textarea id="thought" rows="2" placeholder="例：また私ばかり責められている。みんなの前で言わなくてもいいのに。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-stone-600 mb-2 flex justify-between">
-                                <span>怒りの強さ (1-10)</span>
-                                <span id="intensityLabel" class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Level: 5</span>
-                            </label>
-                            <input type="range" id="intensity" min="0" max="10" value="5" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between text-xs text-stone-400 mt-1">
-                                <span>平穏</span>
-                                <span>激怒</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    <hr class="border-stone-100">
-
-                    <!-- Step 2: Reaction -->
-                    <section class="space-y-4">
-                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
-                            <i data-lucide="activity" class="w-4 h-4"></i> 2. 反応と行動
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">身体的反応</label>
-                                <input type="text" id="bodyReaction" placeholder="例：心臓がドキドキした、顔が熱くなった" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">言動（取った行動）</label>
-                                <input type="text" id="actionTaken" placeholder="例：黙り込んだ、言い返した" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                        </div>
-                    </section>
-
-                    <hr class="border-stone-100">
-
-                    <!-- Step 3: Analysis -->
-                    <section class="space-y-4">
-                        <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2">
-                            <i data-lucide="brain" class="w-4 h-4"></i> 3. 深掘りと分析（落ち着いてから）
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">本当はしてほしかったこと（願望）</label>
-                                <input type="text" id="desire" placeholder="例：個別に静かに指摘してほしかった。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">怒りの裏にある感情（一次感情）</label>
-                                <input type="text" id="primaryEmotion" placeholder="例：悲しみ、恥ずかしさ" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">信念・価値観（「べき」ログ）</label>
-                                <input type="text" id="coreBelief" placeholder="例：人前で恥をかかせるべきではない" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50">
-                            </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-stone-600 mb-1">振り返りと改善点</label>
-                                <textarea id="improvement" rows="2" placeholder="例：次は「場所を変えて話せませんか」と提案してみる。" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-stone-50"></textarea>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="p-4 bg-stone-50 border-t border-stone-200 flex justify-end">
-                    <button type="submit" class="flex items-center gap-2 bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors font-bold shadow-sm">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        ログを記録する
-                    </button>
-                </div>
-            </form>
-
-            <!-- Logs List -->
-            <section class="space-y-4">
-                <div class="flex items-center justify-between border-b border-stone-200 pb-2">
-                    <h2 class="text-xl font-bold text-stone-700">過去の記録</h2>
-                </div>
-                
-                <div id="logsContainer" class="space-y-4">
-                    <!-- Logs will be injected here -->
-                    <div class="text-center py-10 bg-white rounded-xl border border-stone-200 border-dashed text-stone-400">
-                        読み込み中...
-                    </div>
-                </div>
-            </section>
-
-            <!-- FAQ Toggle Button -->
-            <div class="pt-10 pb-10">
-                <button onclick="toggleFaq()" id="faqToggleBtn" class="w-full bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all">
-                    <i data-lucide="help-circle" class="w-5 h-5"></i>
-                    <span>アンガーログ FAQ（よくある質問）</span>
-                    <i data-lucide="chevron-down" class="w-4 h-4" id="faqChevron"></i>
+            <!-- Action Buttons -->
+            <div class="text-center py-8">
+                <button id="grade-btn" onclick="gradeQuiz()" class="btn-primary px-10 py-4 rounded shadow-lg text-xl font-bold tracking-wider w-full md:w-auto">
+                    採点する
                 </button>
-
-                <!-- FAQ Content -->
-                <div id="faqContent" class="hidden mt-6 space-y-6 bg-white p-6 rounded-xl border border-stone-200 shadow-sm transition-all duration-300">
-                    <div class="bg-teal-600 text-white p-4 rounded-lg mb-6">
-                        <h3 class="font-bold text-lg flex items-center gap-2">
-                            <i data-lucide="book-open" class="w-5 h-5"></i>
-                            アンガーログ有効活用のためのFAQ
-                        </h3>
-                        <p class="text-teal-100 text-sm mt-1">
-                            出典に基づいた具体的な手法と理論
-                        </p>
-                    </div>
-                    
-                    <div id="faqItemsContainer" class="space-y-6">
-                        <!-- FAQ Items will be injected here -->
-                    </div>
-
-                    <div class="bg-stone-100 p-4 rounded-lg text-stone-600 text-sm text-center italic mt-6">
-                        アンガーログは、いわば「感情のドライブレコーダー」です。万が一の衝突（怒り）が起きた際、何が原因で、自分はどう反応したのかを正確に振り返ることで、次はより安全に、より自分らしい道を運転できるようになります。
-                    </div>
-                </div>
             </div>
-        </main>
-    </div>
+        </div>
 
-<script>
-    // --- Data & State ---
-    let logs = [];
-    let deleteTargetId = null;
-    const STORAGE_KEY_LOGS = 'angerLog_data';
-
-    // --- FAQ Data ---
-    const faqData = [
-        {
-            category: "【基礎知識】アンガーログとは何か",
-            items: [
-                { q: "アンガーログとは何ですか？", a: "日常で感じた怒りの感情、その時の状況、思考、反応などを客観的に記録する手法です。認知行動療法の「セルフモニタリング」を基盤としています。" },
-                { q: "アンガーログをつける最大のメリットは何ですか？", a: "自分の「怒りのパターンや傾向」を可視化でき、感情に対するメタ認知能力（自分を客観的に見る力）が向上することです。" },
-                { q: "怒りは我慢すべきではないのですか？", a: "アンガーマネジメントは怒りを抑え込むことではなく、「怒る必要があること」と「ないこと」を区別し、建設的に表現することを目指します。無理な抑制は心身の健康を損なうリスクがあります。" }
-            ]
-        },
-        {
-            category: "【書き方のコツ】効果的な記録方法",
-            items: [
-                { q: "記録すべき基本項目は何ですか？", a: "「日時」「場所」「出来事（事実）」「思ったこと」「怒りの強さ」の5点が基本です。" },
-                { q: "出来事はどのように書くのが正解ですか？", a: "第三者がビデオカメラで撮影したかのように、客観的な事実のみを記述します。" },
-                { q: "記録はいつ書くのが最も効果的ですか？", a: "怒りを感じた直後（その場）に書くのが理想です。時間が経つと記憶が曖昧になり、自分の都合よく解釈してしまうためです。" },
-                { q: "怒りの強さを数値化（スケーリング）する意味は？", a: "0〜10（または100）の数値で表すことで、「自分は常に最大レベルで怒っているわけではない」というグラデーションを理解でき、冷静さを取り戻しやすくなります。" },
-                { q: "身体的反応を記録するのはなぜですか？", a: "動悸や筋肉の緊張など、怒りの前兆（サイン）を早期に察知し、爆発前に対処できるようにするためです。" },
-                { q: "「してほしかったこと（本音）」を書く利点は？", a: "怒りの裏にある自分の期待や願望を明確にすることで、具体的な解決策（リクエスト）を見出しやすくなります。" }
-            ]
-        },
-        {
-            category: "【分析と活用】記録をどう役立てるか",
-            items: [
-                { q: "つけたログはいつ読み返すべきですか？", a: "直後は怒りが再燃する可能性があるため、5日〜1週間ほど経って心が安定している時に振り返るのが推奨されます。" },
-                { q: "怒りの背後にある「一次感情」とは何ですか？", a: "怒りは「二次感情」であり、その根底には不安、悲しみ、落胆、寂しさなどの「一次感情」が隠れています。これを特定することが自己理解の鍵です。" },
-                { q: "「べきログ」とは何ですか？", a: "自分の譲れない価値観（コアビリーフ）を整理する記録です。「〜すべき」という自分のマイルールを特定し、その許容範囲を広げるために使います。" },
-                { q: "自分の怒りのタイプを知る方法は？", a: "ログを継続すると、特定の傾向（公明正大、博学多才、威風堂々など）が見えてきます。自分の「怒りのスイッチ」を知ることで、事前に対策を立てられます。" },
-                { q: "アンガーログで職場の人間関係は改善しますか？", a: "自分の感情を客観視し、相手を攻撃するのではなく「Iメッセージ（私は〜と感じた）」で要望を伝えられるようになるため、コミュニケーションが円滑になります。" }
-            ]
-        },
-        {
-            category: "【応用テクニック】さらに有効利用するために",
-            items: [
-                { q: "怒りが強すぎて書くどころではない時は？", a: "まず「6秒ルール」を使い、深呼吸や数を数えることで理性が働く時間を稼いでから、ログの作成に取りかかります。" },
-                { q: "職場での「ハラスメント防止」にどう役立ちますか？", a: "リーダー層がログを活用して自分の感情を数値化することで、感情に任せた叱責が招く「負のコスト」を冷静に判断できるようになります。" },
-                { q: "アプリ（例：おこノート）を使うメリットは？", a: "頻出キーワードから「アンガーマップ」を自動生成したり、曜日や時間帯ごとの怒りの割合をグラフ化して視覚的に分析できる点です。" },
-                { q: "「ハッピーログ」も併用すべきですか？", a: "はい。幸福な出来事も記録することで、認知のバイアスを修正し、ポジティブな側面にも目を向けられるようになります。" },
-                { q: "「タイムアウト」とログの関係は？", a: "激しい怒りを感じた時に一度その場を離れる（タイムアウト）ことで、冷静にログを書くための環境と時間を確保できます。" },
-                { q: "「グラウンディング」をログにどう活かす？", a: "怒りを感じた瞬間に周囲の物の色や形を観察してログにメモする行為自体が、意識を怒りから逸らす効果的な訓練になります。" }
-            ]
-        },
-        {
-            category: "【モチベーションと継続】挫折しないために",
-            items: [
-                { q: "ログを書くのが面倒で続きません。", a: "最初は数値と数単語だけの「マイクロ・ジャーナリング」から始め、記録する筋肉を育てる意識が重要です。" },
-                { q: "全ての怒りを記録しなければなりませんか？", a: "完璧主義は挫折の元です。まずは小さなイライラ（数値2〜3程度）から取り上げてみるのが継続のコツです。" },
-                { q: "ログを人に見られるのが不安です。", a: "パスワード機能付きのアプリや、鍵付きのノートを使用し、プライバシーを確保して正直に書ける環境を作りましょう。" },
-                { q: "怒りを感じる自分を責めてしまいます。", a: "怒りは自分を守るための自然な「生存メカニズム（危険信号）」です。ログは自分を責めるためではなく、理解するためのツールだと捉えてください。" },
-                { q: "ログを書き続けても問題が解決しない場合は？", a: "自分で変えられないこと（天候や他人の性格など）に執着していないか確認し、「自分が変えられる行動」にフォーカスして対処策を練り直します。" },
-                { q: "「隠された怒り」をログで見つけるには？", a: "過度の飲食や原因不明の体調不良がある時、その前後に起きた出来事を記録すると、無意識に抑圧していた怒りが浮き彫りになることがあります。" },
-                { q: "ログで「相手の事情」を推測する意味は？", a: "相手が「なぜそうしたか」を推測・確認することで、自分の思い込みが解消され、怒りの数値が激減することが多々あります。" },
-                { q: "ライフステージが変わると怒りの傾向も変わりますか？", a: "はい。子育て中や責任ある職務への昇進など、環境に応じてストレス源は変化します。定期的にログを見直すことで、今の自分に必要なケアが分かります。" },
-                { q: "ログを共有してもいいですか？", a: "信頼できるパートナーやカウンセラーと共有することで、客観的なフィードバックを得られ、モチベーションの維持に繋がります。" },
-                { q: "アンガーログを卒業するタイミングは？", a: "ログを書かなくても自分の感情を冷静にモニタリングし、適切に対処できるようになれば一つのゴールですが、「心の健康診断」として習慣化し続けるのが理想的です。" }
-            ]
-        }
-    ];
-
-    // --- Initialization ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Init Date
-        resetFormDate();
-        // Init Icons
-        lucide.createIcons();
-        // Init FAQ
-        renderFaq();
-        // Load Logs
-        loadLogs();
-        // Init Slider Listener
-        const slider = document.getElementById('intensity');
-        const label = document.getElementById('intensityLabel');
-        slider.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            label.textContent = `Level: ${val}`;
-            label.className = `px-2 py-0.5 rounded text-xs font-bold ${getIntensityColorClass(val)}`;
-        });
-        // Init Form Submit
-        document.getElementById('logForm').addEventListener('submit', handleFormSubmit);
-    });
-
-    // --- Storage Functions ---
-    function saveLogs() {
-        // Try to save to local storage
-        try {
-            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
-        } catch(e) {
-            console.warn("Storage warning: ", e);
-            alert("ブラウザの保存領域が不足しているか、制限されています。データが保存されない可能性があります。");
-        }
-    }
-
-    function loadLogs() {
-        const storedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
-        if (storedLogs) {
-            try {
-                logs = JSON.parse(storedLogs);
-            } catch (e) {
-                console.error("Failed to load logs", e);
-                logs = [];
-            }
-        }
-        renderLogs();
-    }
-
-
-    // --- Core Functions ---
-
-    function resetFormDate() {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('dateTime').value = now.toISOString().slice(0, 16);
-    }
-
-    function getIntensityColorClass(level) {
-        if (level <= 3) return 'bg-sky-100 text-sky-800';
-        if (level <= 7) return 'bg-amber-100 text-amber-800';
-        return 'bg-rose-100 text-rose-800';
-    }
-
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const newLog = {
-            id: Date.now(),
-            dateTime: document.getElementById('dateTime').value,
-            place: document.getElementById('place').value,
-            targetPerson: document.getElementById('targetPerson').value,
-            event: document.getElementById('event').value,
-            thought: document.getElementById('thought').value,
-            intensity: document.getElementById('intensity').value,
-            bodyReaction: document.getElementById('bodyReaction').value,
-            actionTaken: document.getElementById('actionTaken').value,
-            desire: document.getElementById('desire').value,
-            primaryEmotion: document.getElementById('primaryEmotion').value,
-            coreBelief: document.getElementById('coreBelief').value,
-            improvement: document.getElementById('improvement').value
-        };
-
-        logs.unshift(newLog); // Add to top
-        saveLogs(); // Save to storage
-        renderLogs();
-        
-        // Reset form except date
-        e.target.reset();
-        resetFormDate();
-        document.getElementById('intensityLabel').textContent = "Level: 5";
-        document.getElementById('intensityLabel').className = "px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800";
-
-        showToast();
-    }
-
-    function renderLogs() {
-        const container = document.getElementById('logsContainer');
-        
-        if (logs.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-10 bg-white rounded-xl border border-stone-200 border-dashed text-stone-400">
-                    まだ記録がありません。
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = logs.map(log => {
-            const dateStr = new Date(log.dateTime).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit', weekday: 'short' });
-            
-            return `
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-stone-200 transition-all hover:shadow-md">
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-center gap-3">
-                        <span class="px-2 py-1 rounded-md text-sm font-bold ${getIntensityColorClass(log.intensity)}">
-                            Lv.${log.intensity}
-                        </span>
-                        <div class="text-sm text-stone-500 font-medium flex flex-wrap gap-2 items-center">
-                            <span>${dateStr}</span>
-                            <span class="text-stone-300">|</span>
-                            <span>@${escapeHtml(log.place)}</span>
-                            ${log.targetPerson ? `<span class="text-stone-300">|</span><span class="flex items-center gap-1 text-stone-600"><i data-lucide="user" class="w-3 h-3"></i>${escapeHtml(log.targetPerson)}</span>` : ''}
-                        </div>
-                    </div>
-                    <button onclick="requestDelete(${log.id})" class="text-stone-400 hover:text-rose-500 transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+        <!-- Result Modal / Overlay (Hidden initially) -->
+        <div id="result-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8 text-center border-t-8 border-gold transform transition-all scale-100">
+                <h3 class="text-2xl serif font-bold text-gray-800 mb-2">採点結果</h3>
+                <div class="text-6xl font-bold text-fire-red mb-4 serif">
+                    <span id="score-display">0</span><span class="text-3xl text-gray-400">/100</span>
+                </div>
+                <p id="score-message" class="text-gray-600 mb-8">お疲れ様でした。解説を確認して復習しましょう。</p>
+                <div class="flex flex-col space-y-3">
+                    <button onclick="closeResultOverlay()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded transition">
+                        解説を確認する
+                    </button>
+                    <button onclick="retryQuiz()" class="btn-primary py-3 px-6 rounded font-bold transition">
+                        別の問題で再度挑戦する
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Retry Button (Shown at bottom after grading) -->
+        <div id="retry-section" class="hidden text-center py-12 border-t border-gray-300 mt-8">
+            <p class="text-gray-600 mb-4">今回の学習は終了です。</p>
+            <button onclick="retryQuiz()" class="bg-gray-800 hover:bg-gray-900 text-white px-8 py-4 rounded shadow-lg text-lg font-bold tracking-wider">
+                <i class="fa-solid fa-rotate-right mr-2"></i> 再度挑戦する（新しい10問）
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            &copy; 消防職員向け 長周期地震動対策 e-Learning System
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ----------------------------------------------------
+        // Data: 50 Questions Pool
+        // ----------------------------------------------------
+        // options array structure: [Option1, Option2, Option3, Option4]
+        // answer index: 0-based index of the correct option
+        const questionPool = [
+            // 第1章
+            {
+                q: "長周期地震動の定義において、揺れが1往復するのにかかる時間を何と呼びますか？",
+                options: ["振幅", "震度", "周期", "波長"],
+                answer: 2,
+                exp: "地震が起きると様々な周期を持つ揺れが発生しますが、揺れが1往復するのにかかる時間を「周期」と呼びます。"
+            },
+            {
+                q: "長周期地震動が発生しやすい地震の主な特徴は何ですか？",
+                options: ["震源が非常に浅い", "マグニチュード（地震の規模）が大きい", "発生時間が非常に短い", "短周期の波のみで構成される"],
+                answer: 1,
+                exp: "長周期地震動は、マグニチュードが大きい地震によって発生する「長くゆっくりとした大きな揺れ」です。"
+            },
+            {
+                q: "長周期地震動が遠くまで伝わりやすい理由として正しいものはどれですか？",
+                options: ["速度が非常に速いから", "重力の影響を受けないから", "短周期の揺れに比べて減衰しにくいから", "常に直線的に進むから"],
+                answer: 2,
+                exp: "長周期地震動は短周期の揺れに比べて減衰しにくいため、海の波のように震源から数百キロ離れた場所まで伝わる特性があります。"
+            },
+            {
+                q: "日本の都市部において長周期地震動が増幅されやすい地質学的理由はどれですか？",
+                options: ["火山岩が地表を覆っているため", "地盤が非常に硬いため", "厚くて柔らかい堆積層が存在するため", "海岸線が複雑だから"],
+                answer: 2,
+                exp: "平野や盆地には厚さ数kmにも達する柔らかい堆積層があり、そこに入射した地震波が表面波として発達・増幅されます。"
+            },
+            {
+                q: "長周期地震動によって高層ビルが大きく揺れる現象を何と呼びますか？",
+                options: ["散乱", "共振", "回折", "干渉"],
+                answer: 1,
+                exp: "地面の揺れの周期と建物固有の揺れ周期（固有周期）が一致すると、建物は共振して大きく揺れます。"
+            },
+            {
+                q: "一般的な高層ビルの高さと固有周期の関係について、正しい記述はどれですか？",
+                options: ["建物が低いほど周期は長い", "建物が高いほど周期は長い", "建物の高さと周期は無関係である", "周期は常に1秒以下である"],
+                answer: 1,
+                exp: "高層ビルの固有周期は建物の高さにおおむね比例し、高い建物ほどゆっくり揺れる（周期が長い）特性があります。"
+            },
+            {
+                q: "免震構造の建物について、長周期地震動に対する性質として正しいものはどれですか？",
+                options: ["短周期の揺れよりも長周期の揺れを低減しやすい", "固有周期が長いため、長周期地震動の影響を受けやすい", "どのような周期の揺れも完全に吸収する", "常に地面と全く同じ動きをする"],
+                answer: 1,
+                exp: "免震建物は地震動の短周期成分を避けるために長周期化されているため、長周期地震動とは共振しやすく、影響を受けやすい性質があります。"
+            },
+            {
+                q: "長周期地震動の周期帯の一般的な範囲として、資料で言及されているのはどれですか？",
+                options: ["0.1秒から0.5秒程度", "数秒から20秒程度", "1分から2分程度", "0.01秒以下"],
+                answer: 1,
+                exp: "長周期地震動は、大地震に特有の、周期数秒から20秒程度の揺れを指します。"
+            },
+            {
+                q: "2003年十勝沖地震において、長周期地震動による被害が注目された都市はどこですか？",
+                options: ["東京都", "大阪市", "苫小牧市", "仙台市"],
+                answer: 2,
+                exp: "2003年十勝沖地震では、震源から約250km離れた苫小牧市において石油タンク火災等の甚大な被害が発生し、注目を集めました。"
+            },
+            {
+                q: "長周期地震動は、震度が小さくても大きな影響を及ぼすことがあります。その理由はどれですか？",
+                options: ["震度計は長周期を計測できないから", "震度は地表面の揺れを基にしており、高層階の揺れを十分表現できないから", "常に津波を伴うから", "震度はマグニチュードと同じ意味だから"],
+                answer: 1,
+                exp: "震度は地表面付近の比較的短い揺れを対象とした指標であり、高層ビルの高層階における長周期の揺れを表現するには不十分です。"
+            },
+            // 第2章
+            {
+                q: "気象庁が導入した「長周期地震動階級」は何段階に区分されていますか？",
+                options: ["3段階", "4段階", "7段階", "10段階"],
+                answer: 1,
+                exp: "気象庁は、高層ビル内での影響を評価するため、長周期地震動階級を1から4の4段階で設定しています。"
+            },
+            {
+                q: "令和5年2月1日から、緊急地震速報（警報）が発表される基準に追加された条件はどれですか？",
+                options: ["マグニチュード9.0以上を予想した場合", "長周期地震動階級3以上を予想した場合", "長周期地震動階級1以上を予想した場合", "震度4以上を予想した場合"],
+                answer: 1,
+                exp: "2023年（令和5年）2月1日から、従来の震度基準に加え、長周期地震動階級3以上を予想した場合にも緊急地震速報（警報）が発表される運用になりました。"
+            },
+            {
+                q: "長周期地震動階級2の「人の体感・行動」として正しいものはどれですか？",
+                options: ["ほとんどの人が揺れに気づかない", "物につかまりたいと感じる、行き足が乱れる", "立っていることが困難になる", "揺れに翻弄され、はわないと動けない"],
+                answer: 1,
+                exp: "階級2では室内で大きな揺れを感じ、物につかまりたいと感じるほか、行動に支障を感じます。"
+            },
+            {
+                q: "長周期地震動階級4の「室内の状況」として適切な記述はどれですか？",
+                options: ["ブラインドなどが大きく揺れる", "キャスター付き什器がわずかに動く", "固定していないほとんどの家具が移動・転倒する", "窓ガラスが全て割れる"],
+                answer: 2,
+                exp: "階級4は最も高い階級で、固定していないほとんどの家具が移動・転倒し、立っていることができなくなります。"
+            },
+            {
+                q: "緊急地震速報において、震度によるものと長周期地震動によるものを区別せずに伝える理由はどれですか？",
+                options: ["技術的に区別が不可能だから", "とるべき行動に大きな違いがなく、情報の猶予時間も限られるから", "どちらも同じ震度計で測るから", "全く同じ地域に発表されるから"],
+                answer: 1,
+                exp: "短周期でも長周期でも「身の安全を確保する」という基本行動は共通しており、猶予時間も短いため、区別せずに発表されます。"
+            },
+            {
+                q: "長周期地震動階級を算出するために用いられる指標は何ですか？",
+                options: ["最大地動加速度（PGA）", "絶対速度応答スペクトル（Sva）", "マグニチュード（M）", "震度階級値"],
+                answer: 1,
+                exp: "長周期地震動階級の評価には、建物の揺れの大きさを合理的に表現できる「絶対速度応答スペクトル（Sva）」が用いられます。"
+            },
+            {
+                q: "長周期地震動階級1が予想された場合に発表される情報はどれですか？",
+                options: ["緊急地震速報（警報）", "緊急地震速報（予報）", "地震動特別警報", "津波注意報"],
+                answer: 1,
+                exp: "長周期地震動階級1以上が予想された場合には「緊急地震速報（予報）」が発表されます。"
+            },
+            {
+                q: "地震動特別警報が発表される条件の一つとして正しいものはどれですか？",
+                options: ["震度5弱以上を予想", "長周期地震動階級4を予想", "長周期地震動階級2を予想", "マグニチュード7.0以上を予想"],
+                answer: 1,
+                exp: "最大震度6弱以上または長周期地震動階級4が予想された場合、地震動特別警報に位置付けられます。"
+            },
+            {
+                q: "長周期地震動階級3において、建物自体に起こりうる被害はどれですか？",
+                options: ["建物が完全に倒壊する", "間仕切壁などにひび割れや亀裂が入ることがある", "基礎杭が全て破断する", "地盤沈下が止まらなくなる"],
+                answer: 1,
+                exp: "階級3では、家具の転倒・移動に加え、間仕切壁などにひび割れや亀裂が入ることがあります。"
+            },
+            {
+                q: "緊急地震速報（警報）の対象となる地域はどのような地域ですか？",
+                options: ["日本全国", "階級1以上を予想した地域", "震度4以上または階級3以上を予想した地域", "過去に被害があった地域のみ"],
+                answer: 2,
+                exp: "警報の対象地域は、震度4以上または長周期地震動階級3以上を予想した地域です。"
+            },
+            // 第3章
+            {
+                q: "石油タンクにおける「スロッシング」現象の正しい説明はどれですか？",
+                options: ["タンクの底板が抜ける現象", "地震波と内容液が共振して液面が大きく揺れる現象", "タンクが地面に沈み込む現象", "配管が凍結して破裂する現象"],
+                answer: 1,
+                exp: "スロッシングとは、地震動の周期とタンク内の液体の固有周期が一致し、液面が大きく揺動する現象です。"
+            },
+            {
+                q: "2003年十勝沖地震での石油タンク被害の主な特徴は何ですか？",
+                options: ["全ての固定屋根式タンクが爆発した", "シングルデッキ浮き屋根式タンクを中心に火災や沈没が発生した", "タンクの側板が全て溶けた", "被害は震源のすぐ近くのみに限定された"],
+                answer: 1,
+                exp: "甚大な被害（火災や浮き屋根の沈没）は、主にスロッシング固有周期が長いシングルデッキ浮き屋根式タンクで発生しました。"
+            },
+            {
+                q: "苫小牧でのナフサタンク全面火災の直接的な出火原因と考えられているのはどれですか？",
+                options: ["浮き屋根が沈没した後、露出した液面での消火泡による沈降帯電と放電", "タンクへの直接の落雷", "外部からの放火", "配管からのガス漏れによる自然発火"],
+                answer: 0,
+                exp: "沈没した浮き屋根の代わりに投入された消火泡が水溶液に戻り、沈降する際に帯電して放電が起こったことが原因と考えられています。"
+            },
+            {
+                q: "スロッシングによる被害が発生する目安とされる最大波高は概ね何メートル以上ですか？",
+                options: ["0.1メートル", "0.5メートル", "2メートル", "10メートル"],
+                answer: 2,
+                exp: "苫小牧の事例では、最大波高が概ね2メートル以上のタンクにおいて甚大な被害が発生していました。"
+            },
+            {
+                q: "10万kl級の超大型タンクにおいて、1次モード以外に考慮すべき揺れは何ですか？",
+                options: ["表面張力", "2次モードのスロッシング", "大気圧の変化", "周囲の風速"],
+                answer: 1,
+                exp: "超大型タンクでは2次モードの影響でデッキが大きく変形し、ポンツーンが破損する可能性があることが指摘されています。"
+            },
+            {
+                q: "石油タンクのスロッシング対策として、まず最初に行うべき重要な管理は何ですか？",
+                options: ["タンクの塗装", "液面管理（余裕空間の確保）", "タンクの清掃", "周囲の除草"],
+                answer: 1,
+                exp: "第1義的な対策としては、スロッシング波高が高くなっても溢れないよう適切な液面管理（余裕空間の確保）を行うことが重要です。"
+            },
+            {
+                q: "浮き屋根式タンク（FRT）が原油等の貯蔵に多く用いられる主な理由は何ですか？",
+                options: ["建設費用が最も安いから", "揮発損失を抑制でき、大型化が可能だから", "雨水の混入を完全に防げるから", "どのような地震にも耐えられるから"],
+                answer: 1,
+                exp: "浮き屋根式は直径の大きいタンクの建設が可能で、揮発損失を考慮する必要がある石油類の貯蔵に適しています。"
+            },
+            {
+                q: "固定屋根式タンク（CRT）において、爆発時の影響を最小限にするための設計上の工夫は何ですか？",
+                options: ["全体をコンクリートで固める", "屋根板と側板の接続部を最も弱く溶接し、屋根が吹き飛ぶようにする", "地中に埋める", "窓をたくさん作る"],
+                answer: 1,
+                exp: "万一爆発が発生した時に周囲への影響を最小限にとどめるため、屋根が吹き飛ぶ「放爆構造」に設計されています。"
+            },
+            {
+                q: "スロッシングによって浮き屋根が沈没する主な原因は何ですか？",
+                options: ["重油が重すぎるため", "タンクの底が抜けるため", "揺動により浮室（ポンツーン）やデッキ接合部が破断し、油が流入するため", "浮き屋根が蒸発するため"],
+                answer: 2,
+                exp: "液面の揺動に伴い浮き屋根が変形・破断し、浮室内に油が流入して浮力を保てなくなることで沈没に至ります。"
+            },
+            {
+                q: "1964年新潟地震でのタンク火災の教訓から改善された技術基準はどれですか？",
+                options: ["タンクの色の指定", "シールの材質など衝撃火花が発生しにくい構造への変更", "タンクの高さ制限", "消防署の配置場所"],
+                answer: 1,
+                exp: "当時はシール機構が金属製で衝撃火花が出やすかったため、現在の基準に適合したタンクでは着火危険性が低減されています。"
+            },
+            // 第4章
+            {
+                q: "長周期地震動によるエレベーターの主な被害事例はどれですか？",
+                options: ["籠（かご）が床に激突する", "メインロープやケーブルが共振し、昇降路内の突起物に引っかかる", "全てのボタンが同時に押される", "電気が永久に止まる"],
+                answer: 1,
+                exp: "長いロープが地震動と共振して大きく振れ、レールブラケット等の突起物に引っかかって断線や閉じ込めが発生します。"
+            },
+            {
+                q: "エレベーターの長周期地震動対策として有効なハード対策はどれですか？",
+                options: ["籠の鏡を大きくする", "引っかかり防止対策（プロテクタの設置等）や長周期センサーの整備", "速度を2倍にする", "扉を木製にする"],
+                answer: 1,
+                exp: "ロープの引っかかりを防止する器具の設置や、揺れを検知して制御する長周期センサーの導入が進められています。"
+            },
+            {
+                q: "免震構造の基本原理として、アイソレーターの主な役割は何ですか？",
+                options: ["揺れを完全に止める", "建物の固有周期を長くし、地震入力を低減する", "建物に重りを付ける", "建物を地面に固定する"],
+                answer: 1,
+                exp: "アイソレーターを用いて建物を柔らかく支持することで、固有周期を長くし、地震力を低減させます（アイソレーター機能）。"
+            },
+            {
+                q: "免震建物の長周期地震動対策における「衝突」の問題とは何ですか？",
+                options: ["近隣の建物同士がぶつかる", "免震層の変位が大きくなり、上部建物が周囲の擁壁に衝突する", "籠とエレベーターホールがぶつかる", "家具が天井にぶつかる"],
+                answer: 1,
+                exp: "長周期地震動により免震層が大変形し、水平クリアランス（隙間）を超えて擁壁に衝突する危険があります。"
+            },
+            {
+                q: "長周期地震動に対して、ダンパーに求められる性能は何ですか？",
+                options: ["全く変形しないこと", "長時間繰り返される変形でも性能低下せず、エネルギーを吸収し続けること", "常に一定の温度を保つこと", "磁力で揺れを抑えること"],
+                answer: 1,
+                exp: "長周期地震動は継続時間が長いため、長時間の繰り返し変形による金属疲労や温度上昇に耐える性能が求められます。"
+            },
+            {
+                q: "アクティブ制震（能動的制御）の仕組みとして正しいものはどれですか？",
+                options: ["常に固定しておく", "地震計で揺れをモニターし、コンピュータが命令を出して振動を打ち消す力を発生させる", "重い壁を増設する", "自然に揺れが止まるのを待つ"],
+                answer: 1,
+                exp: "外部からの情報や建物の応答をモニターし、制御装置で能動的に地震動を制御します。"
+            },
+            {
+                q: "高層ビルの高層階において、震度情報だけでは被害を想像しにくい理由はどれですか？",
+                options: ["高層階には震度計がないから", "低層階にある管理センターでは、自身の体感（震度相当）以上の揺れを想像しにくいから", "常に霧が出ていて見えないから", "震度計は1階にしか置いてはいけないから"],
+                answer: 1,
+                exp: "低層階では発表された震度程度の揺れしか体感しないため、高層階で発生している激しい揺れや被害を察知しにくい傾向があります。"
+            },
+            {
+                q: "パッシブ制震（受動的制御）の特徴として正しいものはどれですか？",
+                options: ["外部から電力を供給して動かす", "装置の特性が固定されており、地震の途中で変わらない", "人が手動で操作する", "常に風の力で動かす"],
+                answer: 1,
+                exp: "パッシブ制震は、装置の特性が固定されており、地震エネルギーを吸収する構造です。"
+            },
+            {
+                q: "長周期地震動によるエレベーターの閉じ込め事故を防ぐための運用上の注意はどれですか？",
+                options: ["地震が起きたらすぐに最上階へ向かう", "揺れを感じたら全ての階のボタンを押し、停止した階ですぐに降りる", "籠の中でジャンプする", "扉を中から無理やり開ける"],
+                answer: 1,
+                exp: "地震発生時には、直ちに全ての階のボタンを押し、停止した階で速やかに降車することが基本原則です。"
+            },
+            {
+                q: "昇降機（エレベーター）の管理者が地震後に点検を行う際の共通の課題は何ですか？",
+                options: ["階段が使えないこと", "地下や1階の管理室にいるため、高層階での長周期地震動の影響を予測しにくいこと", "常に暗闇で作業すること", "工具が重すぎること"],
+                answer: 1,
+                exp: "管理者が低層階に常駐している場合、長周期地震動による上層階の状況を把握しにくいという課題があります。"
+            },
+            // 第5章
+            {
+                q: "地震による負傷者の原因のうち、家具類の転倒・落下・移動が占める割合は概ねどれくらいですか？",
+                options: ["5％以下", "10％程度", "3割から5割", "9割以上"],
+                answer: 2,
+                exp: "東京消防庁の調査によれば、負傷原因の3割から5割を家具類の転倒・落下・移動が占めています。"
+            },
+            {
+                q: "長周期地震動における家具の挙動として、従来の地震対策に加えて特に警戒すべき点はどれですか？",
+                options: ["家具が溶けること", "背の低い家具でも大きく「移動」し、凶器となること", "家具が静かに浮き上がること", "家具の色が変わること"],
+                answer: 1,
+                exp: "大きくゆっくりした揺れにより、キャスター付きの什器や背の低い家具が数メートルも「移動」する危険があります。"
+            },
+            {
+                q: "家具の転倒・落下防止器具の中で、最も効果が高いとされているものはどれですか？",
+                options: ["ストッパー式（単独）", "マット式（単独）", "L型金具（ボルト固定）", "ポール式（単独）"],
+                answer: 2,
+                exp: "ネジやボルトで壁や床に直接固定するL型金具が最も高い効果を示します。"
+            },
+            {
+                q: "ポール式（つっぱり棒）を設置する際の注意点として正しいものはどれですか？",
+                options: ["天井のどこに設置しても良い", "天井の強度を確認し、ストッパー式や粘着マット式と併用する", "緩めに設置する", "1本だけ設置すれば十分である"],
+                answer: 1,
+                exp: "ポール式は天井の強度が重要であり、ストッパー式等と組み合わせることで効果が高まります。"
+            },
+            {
+                q: "オフィスのレイアウト設計において、避難経路の幅は最低何メートル確保すべきですか？",
+                options: ["0.5メートル", "1.2メートル", "2.0メートル", "5.0メートル"],
+                answer: 1,
+                exp: "避難路の確保のため、1.2メートル以上の通路幅を維持することが推奨されています。"
+            },
+            {
+                q: "病院の地震対策における「5つの原則」に含まれないものはどれですか？",
+                options: ["動かさないものは固定する", "キャスターは原則固定する", "高層階の患者を全員1階へ移す", "安定した形状・バランスにする"],
+                answer: 2,
+                exp: "病院の地震対策5原則は、固定、安定、バランス、キャスターの原則固定などです。"
+            },
+            {
+                q: "緊急地震速報を見聞きした際、高層ビル内での安全行動として正しいものはどれですか？",
+                options: ["あわてて非常階段へ駆け出す", "エレベーターで1階へ向かう", "物が「落ちてこない・倒れてこない・移動してこない」場所へ身を寄せる", "窓から外を確認する"],
+                answer: 2,
+                exp: "揺れに翻弄されないよう姿勢を低くし、頭部を保護しながら安全なスペースへ退避します。"
+            },
+            {
+                q: "長周期地震動による不安感の増大を防ぐために、最も重要とされることは何ですか？",
+                options: ["長周期地震動の特性を事前に「知っておくこと」", "常に耳栓をしておくこと", "地震の時は目をつむること", "建物からすぐに飛び出す訓練をすること"],
+                answer: 0,
+                exp: "未知の揺れに対する不安を低減するためには、事前に知識を得て、体感しておくことが有効です。"
+            },
+            {
+                q: "地震直後の行動ルールとして、高層階で推奨される負傷者の把握方法はどれですか？",
+                options: ["全員が1階に降りて報告する", "階層ごとにあらかじめ定めた安全なスペースに集合し、安否を確認する", "消防隊が来るまで何もしない", "大声で叫び続ける"],
+                answer: 1,
+                exp: "エレベーター停止による孤立を防ぐため、階層ごとのコミュニティで迅速に安否確認を行うことが重要です。"
+            },
+            {
+                q: "高層階において、救護の到着に時間がかかることを想定して備えるべきものはどれですか？",
+                options: ["最新の大型テレビ", "応急救護用品や常用電源によらないラジオ・照明", "折り畳み自転車", "豪華な非常食"],
+                answer: 1,
+                exp: "救助に時間を要するため、各階層ごとに応急救護セットや情報収集のためのラジオ、懐中電灯を備える必要があります。"
+            }
+        ];
+
+        // ----------------------------------------------------
+        // Logic
+        // ----------------------------------------------------
+        let currentQuestions = [];
+        let userAnswers = {}; // { questionIndex: selectedOptionIndex }
+        let isGraded = false;
+
+        function startQuiz() {
+            // Pick 10 random questions
+            const shuffled = [...questionPool].sort(() => 0.5 - Math.random());
+            currentQuestions = shuffled.slice(0, 10);
+            
+            // Reset state
+            userAnswers = {};
+            isGraded = false;
+
+            // Render
+            renderQuestions();
+            
+            // Switch view
+            document.getElementById('intro-section').classList.add('hidden');
+            document.getElementById('quiz-section').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            currentQuestions.forEach((q, index) => {
+                const qNum = index + 1;
                 
-                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                    <div class="bg-stone-50 p-3 rounded-lg">
-                        <p class="text-xs text-stone-500 font-bold mb-1">出来事（事実）</p>
-                        <p class="text-stone-700 text-sm whitespace-pre-wrap">${escapeHtml(log.event)}</p>
+                // Card HTML
+                const card = document.createElement('div');
+                card.className = 'card rounded-lg p-6 relative';
+                card.id = `q-card-${index}`;
+
+                let optionsHtml = '';
+                q.options.forEach((opt, i) => {
+                    optionsHtml += `
+                        <label class="block mb-2 option-label group">
+                            <input type="radio" name="q${index}" value="${i}" class="hidden option-radio" onchange="selectAnswer(${index}, ${i})" ${isGraded ? 'disabled' : ''}>
+                            <div class="option-content border border-gray-200 rounded p-3 text-gray-700 hover:bg-gray-50 group-hover:border-gray-400 flex items-center">
+                                <span class="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center mr-3 text-xs font-bold option-marker bg-white text-gray-500">
+                                    ${String.fromCharCode(65 + i)}
+                                </span>
+                                <span>${opt}</span>
+                            </div>
+                        </label>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="mb-4">
+                        <span class="inline-block bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded mb-2">Q${qNum}</span>
+                        <h3 class="text-lg font-bold text-gray-900">${q.q}</h3>
                     </div>
-                    <div class="bg-teal-50 p-3 rounded-lg">
-                        <p class="text-xs text-teal-600 font-bold mb-1">思ったこと</p>
-                        <p class="text-teal-900 text-sm whitespace-pre-wrap">${escapeHtml(log.thought)}</p>
+                    <div class="space-y-2">
+                        ${optionsHtml}
                     </div>
-                </div>
-
-                ${(log.primaryEmotion || log.coreBelief) ? `
-                <div class="flex flex-wrap gap-2 text-xs">
-                    ${log.primaryEmotion ? `
-                    <span class="bg-rose-50 text-rose-700 px-2 py-1 rounded-full flex items-center gap-1 border border-rose-100">
-                        <i data-lucide="heart" class="w-3 h-3"></i> 裏の感情: ${escapeHtml(log.primaryEmotion)}
-                    </span>` : ''}
-                    ${log.coreBelief ? `
-                    <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-full flex items-center gap-1 border border-amber-100">
-                        <i data-lucide="brain" class="w-3 h-3"></i> 信念: ${escapeHtml(log.coreBelief)}
-                    </span>` : ''}
-                </div>` : ''}
-            </div>
-            `;
-        }).join('');
-
-        lucide.createIcons();
-    }
-
-    // --- Delete Logic ---
-    function requestDelete(id) {
-        deleteTargetId = id;
-        const modal = document.getElementById('deleteModal');
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.firstElementChild.classList.add('scale-100'), 10);
-    }
-
-    function confirmDelete() {
-        if (deleteTargetId) {
-            logs = logs.filter(l => l.id !== deleteTargetId);
-            saveLogs();
-            deleteTargetId = null;
-            renderLogs();
-            closeModal('deleteModal');
+                    <!-- Result & Explanation Area (Hidden initially) -->
+                    <div id="result-${index}" class="explanation-box bg-gray-50 rounded mt-4 p-4 border-l-4 border-gray-300 text-sm">
+                        <!-- Content injected via JS on grade -->
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            // Show grade button, hide retry section
+            document.getElementById('grade-btn').classList.remove('hidden');
+            document.getElementById('retry-section').classList.add('hidden');
         }
-    }
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.add('hidden');
-    }
+        function selectAnswer(questionIndex, optionIndex) {
+            if (isGraded) return;
+            userAnswers[questionIndex] = optionIndex;
+        }
 
-    // --- Data Manager Logic ---
-    function openDataManager() {
-        // Load data for display
-        updateCSVDisplay();
-        updateBackupDisplay();
-
-        const modal = document.getElementById('dataManagerModal');
-        modal.classList.remove('hidden');
-        
-        switchTab('csv');
-    }
-
-    function switchTab(tabId) {
-        // Hide all contents
-        ['csv', 'backup', 'restore'].forEach(id => {
-            const el = document.getElementById(`content-${id}`);
-            const tab = document.getElementById(`tab-${id}`);
-            if(el) el.classList.add('hidden');
-            if(tab) {
-                tab.classList.remove('bg-white', 'shadow-sm', 'text-teal-700');
-                tab.classList.add('text-stone-500');
+        function gradeQuiz() {
+            // Check if all answered? (Optional, let's allow partial grading but warn if needed. For now, strict grading not required by prompt, just "grade")
+            if (Object.keys(userAnswers).length < currentQuestions.length) {
+                if(!confirm("未回答の問題がありますが、採点しますか？")) return;
             }
-        });
-        
-        // Show selected
-        document.getElementById(`content-${tabId}`).classList.remove('hidden');
-        document.getElementById(`tab-${tabId}`).classList.add('bg-white', 'shadow-sm', 'text-teal-700');
-        document.getElementById(`tab-${tabId}`).classList.remove('text-stone-500');
-    }
 
-    function updateCSVDisplay() {
-        if (logs.length === 0) {
-            document.getElementById('csvArea').value = "データがありません";
-            return;
-        }
-        const header = ["日時", "場所", "相手", "強度(1-10)", "出来事", "思考", "身体反応", "行動", "願望", "一次感情", "信念", "改善策"];
-        const rows = logs.map(log => {
-            return [
-                log.dateTime.replace('T', ' '),
-                log.place,
-                log.targetPerson,
-                log.intensity,
-                log.event,
-                log.thought,
-                log.bodyReaction,
-                log.actionTaken,
-                log.desire,
-                log.primaryEmotion,
-                log.coreBelief,
-                log.improvement
-            ].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',');
-        }).join('\n');
-        document.getElementById('csvArea').value = header.join(',') + '\n' + rows;
-    }
+            let score = 0;
+            isGraded = true;
 
-    function updateBackupDisplay() {
-        // Simple JSON backup
-        document.getElementById('backupArea').value = JSON.stringify(logs);
-    }
-    
-    async function copyText(elementId) {
-        const textArea = document.getElementById(elementId);
-        textArea.select();
-        textArea.setSelectionRange(0, 99999);
-        try {
-            await navigator.clipboard.writeText(textArea.value);
-            showToast(); // Reuse toast for success feedback
-        } catch (err) {
-            alert("コピーできませんでした。手動でコピーしてください。");
-        }
-    }
+            currentQuestions.forEach((q, index) => {
+                const userChoice = userAnswers[index];
+                const isCorrect = (userChoice === q.answer);
+                if (isCorrect) score += 10;
 
-    function executeRestore() {
-        const jsonStr = document.getElementById('restoreArea').value;
-        if(!jsonStr.trim()) {
-            alert("バックアップコードを入力してください。");
-            return;
-        }
+                // Update UI for this card
+                const resultBox = document.getElementById(`result-${index}`);
+                const card = document.getElementById(`q-card-${index}`);
+                
+                // Color Code inputs
+                const inputs = document.getElementsByName(`q${index}`);
+                inputs.forEach((input, i) => {
+                    input.disabled = true;
+                    const contentDiv = input.nextElementSibling;
+                    const marker = contentDiv.querySelector('.option-marker');
+                    
+                    if (i === q.answer) {
+                        // Correct Answer Style
+                        contentDiv.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+                        marker.classList.add('bg-green-500', 'text-white', 'border-green-500');
+                        marker.innerHTML = '<i class="fas fa-check"></i>';
+                    } else if (i === userChoice && !isCorrect) {
+                        // User Wrong Answer Style
+                        contentDiv.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                        marker.classList.add('bg-red-500', 'text-white', 'border-red-500');
+                        marker.innerHTML = '<i class="fas fa-times"></i>';
+                    }
+                });
 
-        try {
-            const restoredData = JSON.parse(jsonStr);
-            if(Array.isArray(restoredData)) {
-                if(confirm("現在のデータを上書きして復元しますか？この操作は元に戻せません。")) {
-                    logs = restoredData;
-                    saveLogs();
-                    renderLogs();
-                    closeModal('dataManagerModal');
-                    showToast();
-                }
-            } else {
-                alert("データの形式が正しくありません。");
-            }
-        } catch(e) {
-            alert("復元に失敗しました。コードが正しいか確認してください。");
-        }
-    }
-
-    // --- FAQ Logic ---
-    function renderFaq() {
-        const container = document.getElementById('faqItemsContainer');
-        container.innerHTML = faqData.map(category => `
-            <div class="space-y-4">
-                <h4 class="font-bold text-stone-700 border-l-4 border-teal-500 pl-3 py-1 bg-stone-50">
-                    ${category.category}
-                </h4>
-                <div class="space-y-4">
-                    ${category.items.map(item => `
-                        <div class="border-b border-stone-100 pb-4 last:border-0">
-                            <p class="font-bold text-teal-700 mb-2 flex items-start gap-2">
-                                <span class="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded mt-0.5">Q</span>
-                                ${item.q}
-                            </p>
-                            <p class="text-stone-600 text-sm leading-relaxed pl-8">
-                                ${item.a}
-                            </p>
+                // Set Explanation Content
+                const statusHtml = isCorrect 
+                    ? '<span class="badge-correct text-xs px-2 py-1 rounded font-bold mb-2 inline-block">正解</span>' 
+                    : '<span class="badge-incorrect text-xs px-2 py-1 rounded font-bold mb-2 inline-block">不正解</span>';
+                
+                resultBox.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-grow">
+                            ${statusHtml}
+                            <p class="font-bold text-gray-800 mb-1">【正解】${q.options[q.answer]}</p>
+                            <p class="text-gray-600 leading-relaxed"><span class="font-bold text-fire-red">解説：</span>${q.exp}</p>
                         </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
+                    </div>
+                `;
+                
+                // Show explanation
+                resultBox.classList.add('visible');
+                resultBox.style.borderColor = isCorrect ? '#10B981' : '#EF4444';
+            });
 
-    function toggleFaq() {
-        const content = document.getElementById('faqContent');
-        const chevron = document.getElementById('faqChevron');
-        
-        if (content.classList.contains('hidden')) {
-            content.classList.remove('hidden');
-            chevron.setAttribute('data-lucide', 'chevron-up');
-        } else {
-            content.classList.add('hidden');
-            chevron.setAttribute('data-lucide', 'chevron-down');
+            // Show Overlay with Score
+            const scoreDisplay = document.getElementById('score-display');
+            const scoreMessage = document.getElementById('score-message');
+            scoreDisplay.textContent = score;
+
+            if (score === 100) {
+                scoreMessage.textContent = "素晴らしい！全問正解です。知識は完璧です。";
+                scoreMessage.className = "text-gold font-bold mb-8";
+            } else if (score >= 80) {
+                scoreMessage.textContent = "合格ラインです。間違えた箇所を確認しましょう。";
+            } else {
+                scoreMessage.textContent = "復習が必要です。解説をよく読んで再挑戦してください。";
+            }
+
+            document.getElementById('result-overlay').classList.remove('hidden');
+            document.getElementById('result-overlay').classList.add('flex');
+
+            // Hide Grade Button, Show Retry Section
+            document.getElementById('grade-btn').classList.add('hidden');
+            document.getElementById('retry-section').classList.remove('hidden');
+            
+            // Scroll to top to ensure overlay is nice, or just stay put.
         }
-        lucide.createIcons();
-    }
 
-    // --- Utility ---
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+        function closeResultOverlay() {
+            document.getElementById('result-overlay').classList.add('hidden');
+            document.getElementById('result-overlay').classList.remove('flex');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    function showToast() {
-        const toast = document.getElementById('toast');
-        toast.classList.remove('hidden');
-        void toast.offsetWidth; 
-        toast.classList.remove('opacity-0');
-        
-        setTimeout(() => {
-            toast.classList.add('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 300);
-        }, 3000);
-    }
-</script>
+        function retryQuiz() {
+            closeResultOverlay();
+            startQuiz();
+        }
+    </script>
 </body>
 </html>
