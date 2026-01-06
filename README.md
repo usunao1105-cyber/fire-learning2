@@ -92,7 +92,7 @@ e-Learning№２
     <!-- 各Lesson -->
     <div class="card">
       <div class="lesson-title">Lesson 1</div>
-      <div class="lesson-desc">火災現場の安全管理</div>
+      <div class="lesson-desc">長周期的振動e-Learning</div>
       <a href="lesson1/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
