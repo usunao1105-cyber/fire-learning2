@@ -1,0 +1,674 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { BookOpen, CheckCircle, AlertTriangle, RefreshCw, Award, ShieldAlert, Activity, Scale, Info } from 'lucide-react';
+
+// --- データ定義 (全50問) ---
+// Q1-Q35は提供された選択肢を使用。Q36-Q50は一問一答形式だったため、学習用に適切な選択肢を生成して補完しています。
+
+const ALL_QUESTIONS = [
+  // カテゴリー1：フェンタニルの基礎知識と薬理
+  {
+    id: 1,
+    category: "基礎知識・薬理",
+    question: "フェンタニルは、鎮痛薬の基準とされるモルヒネと比較して、およそ何倍の鎮痛力価（強さ）を持つとされていますか？",
+    options: ["2～5倍", "10～20倍", "50～100倍", "1,000倍"],
+    correctIndex: 2,
+    explanation: "フェンタニルは極めて強力な合成オピオイドであり、モルヒネの50倍から100倍、ヘロインの約50倍の力価を持つと報告されています。"
+  },
+  {
+    id: 2,
+    category: "基礎知識・薬理",
+    question: "フェンタニルの薬理学的特性として、現場での迅速な作用発現に最も寄与している性質は何ですか？",
+    options: ["水溶性が高いこと", "脂溶性が極めて高いこと", "揮発性が高いこと", "消化管での吸収が良いこと"],
+    correctIndex: 1,
+    explanation: "フェンタニルは圧倒的な脂溶性（親油性）を持つため、血液脳関門を容易に通過し、投与後数分で中枢神経系へ到達します。これが迅速な作用発現の理由です。"
+  },
+  {
+    id: 3,
+    category: "基礎知識・薬理",
+    question: "フェンタニルを医療現場で使用する際、主にどの臓器で代謝されますか？",
+    options: ["腎臓", "肝臓", "肺", "脾臓"],
+    correctIndex: 1,
+    explanation: "フェンタニルは主に肝臓のシトクロムP450酵素（特にCYP3A4）によって代謝され、ノルフェンタニルなどの不活性な代謝物に変化します。"
+  },
+  {
+    id: 4,
+    category: "基礎知識・薬理",
+    question: "モルヒネと比較したフェンタニルの臨床上の利点として、正しいものはどれですか？",
+    options: ["作用時間が極めて長い", "腎不全の患者に対しても比較的安全に使用できる", "呼吸抑制を全く起こさない", "瞳孔を散大させる"],
+    correctIndex: 1,
+    explanation: "モルヒネは腎排泄性の活性代謝物を持つため腎不全で蓄積のリスクがありますが、フェンタニルは主に肝代謝によって消失するため、腎機能障害を持つ患者にも推奨されます。"
+  },
+  {
+    id: 5,
+    category: "基礎知識・薬理",
+    question: "フェンタニルの不法製造において、ヘロインなどの植物由来薬物と比較した最大のメリット（犯罪組織側）は何ですか？",
+    options: ["原料が安価な植物である", "製造に広大な農地が必要である", "天候に左右されず、地下研究所で完全に合成可能である", "専門的な化学知識が全く不要である"],
+    correctIndex: 2,
+    explanation: "ヘロインがケシの栽培を必要とするのに対し、フェンタニルは化学物質から完全に合成できるため、コストが低く供給が安定しています。"
+  },
+  // カテゴリー2：症状と過剰摂取（オーバードーズ）
+  {
+    id: 6,
+    category: "症状・中毒",
+    question: "オピオイド中毒が疑われる際の「三徴（特徴的な3つの症状）」に含まれないものはどれですか？",
+    options: ["意識消失（昏睡）", "ピンポイント瞳孔（縮瞳）", "呼吸抑制", "血圧の急激な上昇"],
+    correctIndex: 3,
+    explanation: "オピオイド中毒の三徴は「昏睡」「ピンポイント瞳孔」「呼吸抑制」であり、これらが揃っている場合は強力な中毒が強く疑われます。"
+  },
+  {
+    id: 7,
+    category: "症状・中毒",
+    question: "フェンタニル過剰摂取時の呼吸状態として、典型的な特徴はどれですか？",
+    options: ["速くて深い呼吸", "浅く、不規則で、極めて遅い呼吸（毎分12回以下）", "喘鳴（ゼーゼーする音）を伴う呼吸", "過換気状態"],
+    correctIndex: 1,
+    explanation: "オピオイドは延髄の呼吸中枢を抑制するため、呼吸数は著しく減少し、最終的には停止に至ります。"
+  },
+  {
+    id: 8,
+    category: "症状・中毒",
+    question: "フェンタニル特有の重篤な副作用で、胸壁や腹部の筋肉が硬直し、換気が困難になる状態を何と呼びますか？",
+    options: ["アイアン・肺・症候群", "木製胸郭症候群（Wooden Chest Syndrome）", "スティッフ・マン症候群", "胸郭出口症候群"],
+    correctIndex: 1,
+    explanation: "高用量のフェンタニルを急速に投与した場合、胸部や腹部の筋肉が急激に硬直して人工呼吸が困難になる「木製胸郭症候群」を引き起こすことがあります。"
+  },
+  {
+    id: 9,
+    category: "症状・中毒",
+    question: "フェンタニル過剰摂取で「チアノーゼ」が現れる原因は何ですか？",
+    options: ["体温の急激な上昇", "肝機能の停止", "呼吸抑制による血中酸素濃度の低下", "皮膚への直接的な薬剤付着"],
+    correctIndex: 2,
+    explanation: "呼吸抑制により酸素が不足するため、唇や指先、爪が青紫色や灰色に変色するチアノーゼが見られます。"
+  },
+  {
+    id: 10,
+    category: "症状・中毒",
+    question: "過剰摂取者が発する「デス・ラトル（死の喘鳴）」とはどのような音ですか？",
+    options: ["鋭いホイッスル音", "窒息しかけているような「ゴロゴロ」という喉の鳴る音", "激しい咳込み", "連続的なクシャミ"],
+    correctIndex: 1,
+    explanation: "意識消失と呼吸不全に伴い、喉に溜まった分泌物などで「ゴロゴロ」といった異音や激しいイビキのような音が聞こえることがあります。"
+  },
+  // カテゴリー3：現場活動と安全管理
+  {
+    id: 11,
+    category: "現場活動・安全",
+    question: "フェンタニルなどのオピオイド中毒を劇的に逆転（回復）させる薬剤は何ですか？",
+    options: ["アドレナリン", "アトロピン", "ナロキソン", "ジアゼパム"],
+    correctIndex: 2,
+    explanation: "ナロキソンはオピオイド受容体アンタゴニストであり、脳内の受容体からフェンタニルを引き剥がして呼吸を再開させます。"
+  },
+  {
+    id: 12,
+    category: "現場活動・安全",
+    question: "フェンタニルの粉末が皮膚に付着した場合、最初にすべき適切な処置は何ですか？",
+    options: ["石鹸と多量の水で洗い流す", "アルコール消毒液で拭き取る", "乾いた布で強くこする", "何もしない"],
+    correctIndex: 0,
+    explanation: "シンプルな石鹸と水での洗浄が最も有効です。アルコールベースのハンドサニタイザーなどは、逆に皮膚からの吸収を促進する可能性があるため避けるべきです。"
+  },
+  {
+    id: 13,
+    category: "現場活動・安全",
+    question: "現場で粉末状の薬物を発見した際、ファーストレスポンダーの曝露リスクについて正しい説明はどれですか？",
+    options: ["部屋に入っただけで即座に中毒になる", "粉末に触れた瞬間に死に至る", "偶発的な皮膚接触による中毒リスクは極めて低い", "防護服がなければ救助してはいけない"],
+    correctIndex: 2,
+    explanation: "偶発的な皮膚接触や空気の吸入で即座に中毒になるという報告は「事実よりも神話」に近いとされており、適切な手袋（ニトリル製）を着用していれば曝露リスクは非常に低いです。"
+  },
+  {
+    id: 14,
+    category: "現場活動・安全",
+    question: "どのような状況下でN95マスク（呼吸用保護具）の着用が推奨されますか？",
+    options: ["患者の横に粉末が置かれているだけの時", "患者に触れる時", "薬物の粒子が空気中に飛散（浮遊）している可能性がある時", "屋外での活動時"],
+    correctIndex: 2,
+    explanation: "粒子が空気中に舞っている場合にはN95マスクが有効な保護手段となりますが、静置された粉末があるだけでは吸入リスクは低いです。"
+  },
+  {
+    id: 15,
+    category: "現場活動・安全",
+    question: "ナロキソン投与後、2〜3分経過しても呼吸が改善しない場合の対応として正しいものはどれですか？",
+    options: ["回復を諦める", "ナロキソンの追加投与を行う", "直ちに冷水を浴びせる", "昇圧剤を大量投与する"],
+    correctIndex: 1,
+    explanation: "フェンタニルは強力なため、一度のナロキソン投与では不十分な場合があります。呼吸が改善するまで数分おきに反復投与を行うのが標準的なプロトコルです。"
+  },
+  // カテゴリー4：最新のトレンドと添加物
+  {
+    id: 16,
+    category: "トレンド・添加物",
+    question: "近年、フェンタニルに混入され社会問題となっている、ナロキソンが効かない動物用鎮静薬は何ですか？",
+    options: ["ケタミン", "キシラジン（Xylazine）", "フェノバルビタール", "リドカイン"],
+    correctIndex: 1,
+    explanation: "キシラジンは非オピオイド系の鎮静薬であるためナロキソンが無効であり、併用されると救命が非常に困難になります。"
+  },
+  {
+    id: 17,
+    category: "トレンド・添加物",
+    question: "キシラジンが混入した薬物を使用し続けると、皮膚にどのような症状が現れますか？",
+    options: ["激しい発疹", "重度の潰瘍や組織の壊死", "皮膚の硬化", "全身の多汗"],
+    correctIndex: 1,
+    explanation: "キシラジン常用者の皮膚には深刻な潰瘍や壊死が生じることがあり、その外見から「ゾンビドラッグ」とも呼ばれます。"
+  },
+  {
+    id: 18,
+    category: "トレンド・添加物",
+    question: "若年層をターゲットにした、カラフルな色のフェンタニル錠剤を何と呼びますか？",
+    options: ["キャンディ・フェンタ", "パステル・オピオイド", "レインボー・フェンタニル", "フルーツ・ピル"],
+    correctIndex: 2,
+    explanation: "見た目を菓子のようにして若年層の警戒心を解くための「レインボー・フェンタニル」が流通しています。"
+  },
+  {
+    id: 19,
+    category: "トレンド・添加物",
+    question: "「One Pill Can Kill（一錠で命を落とす）」というキャンペーンが強調している事実はどれですか？",
+    options: ["フェンタニルは処方薬なら安全である", "偽造錠剤の中に致死量のフェンタニルが含まれている可能性がある", "薬物は大量に飲まなければ死なない", "フェンタニルは目で見れば判別できる"],
+    correctIndex: 1,
+    explanation: "見た目が本物の処方薬（オキシコドン等）にそっくりな偽造錠剤に、微量でも致死量となるフェンタニルが含まれているリスクを警告しています。"
+  },
+  {
+    id: 20,
+    category: "トレンド・添加物",
+    question: "フェンタニルの致死量は、一般的な成人の場合、およそどの程度とされていますか？",
+    options: ["100ミリグラム", "2ミリグラム", "1グラム", "10グラム"],
+    correctIndex: 1,
+    explanation: "わずか2ミリグラムという極微量でも、多くの人にとって致死量になり得ます。"
+  },
+  // カテゴリー5：日本国内の管理と法規制
+  {
+    id: 21,
+    category: "法規制・管理",
+    question: "日本においてフェンタニルを規制している主な法律の名称は何ですか？",
+    options: ["薬機法（旧薬事法）", "毒物及び劇物取締法", "麻薬及び向精神薬取締法", "覚醒剤取締法"],
+    correctIndex: 2,
+    explanation: "フェンタニルは「麻薬」として、麻薬及び向精神薬取締法により厳格に規制されています。"
+  },
+  {
+    id: 22,
+    category: "法規制・管理",
+    question: "病院や診療所でフェンタニルを保管する際のルールとして、誤っているものはどれですか？",
+    options: ["鍵をかけた堅固な設備に保管する", "他の医薬品とは区別して保管する", "職員なら誰でも自由に持ち出せる場所に置く", "麻薬専用の金庫を使用する"],
+    correctIndex: 2,
+    explanation: "麻薬は鍵のかかる堅固な設備（金庫等）に、他の薬品とは完全に隔離して保管し、管理者が厳格に扱う必要があります。"
+  },
+  {
+    id: 23,
+    category: "法規制・管理",
+    question: "使用期限が切れたフェンタニル在庫を廃棄する際、正しい手続きはどれですか？",
+    options: ["普通ゴミとして捨てる", "その場で下水に流し、後で報告する", "あらかじめ都道府県知事に「麻薬廃棄届」を提出し、職員の立会い下で廃棄する", "製薬会社に無断で送り返す"],
+    correctIndex: 2,
+    explanation: "未使用の在庫（陳旧麻薬）の廃棄には、事前の届出と当局職員の立会いが必要です。"
+  },
+  {
+    id: 24,
+    category: "法規制・管理",
+    question: "患者に投与した後に注射器に残った「施用残（せようざん）」の廃棄について正しいものはどれですか？",
+    options: ["都道府県知事への届け出は不要だが、帳簿への記録と立会いが必要である", "施用残であっても毎回事前に「麻薬廃棄届」を出さなければならない", "そのままゴミ箱に捨てて良い", "次の患者に使い回す"],
+    correctIndex: 0,
+    explanation: "施用に伴う残液（施用残）の廃棄は、事前の届出は不要ですが、他の職員の立会い下で適切に処分し、その数量をmL単位で帳簿に記録する必要があります。"
+  },
+  {
+    id: 25,
+    category: "法規制・管理",
+    question: "家庭で療養中の患者が死亡し、フェンタニルパッチ（貼り薬）が残された場合の適切な対応はどれですか？",
+    options: ["家族が自分でゴミに出すように勧める", "警察に全て没収してもらう", "遺族から回収し、医療機関で「調剤済麻薬」として廃棄し、30日以内に届け出る", "そのまま保管し、他の家族が痛い時に使う"],
+    correctIndex: 2,
+    explanation: "遺族等から返納された麻薬は「調剤済麻薬」として医療機関で適切に廃棄し、30日以内に「調剤済麻薬廃棄届」を提出する必要があります。"
+  },
+  // カテゴリー6：現場での対応と救急資機材
+  {
+    id: 26,
+    category: "現場対応・資機材",
+    question: "フェンタニルパッチ（経皮吸収型製剤）を使用している患者の救護で、最も注意すべき環境要因は何ですか？",
+    options: ["周囲の騒音", "外部からの加熱（サウナ、電気毛布、発熱など）", "患者の衣服の色", "部屋の明るさ"],
+    correctIndex: 1,
+    explanation: "パッチを貼った部位が加熱されると、皮膚の血流量が増え、フェンタニルの吸収が急増して過剰摂取状態になる危険があります。"
+  },
+  {
+    id: 27,
+    category: "現場対応・資機材",
+    question: "救急車内でフェンタニル過剰摂取が疑われる患者に人工呼吸を行う際、活動員の安全について正しいものはどれですか？",
+    options: ["呼気や汗から活動員が中毒になるリスクはないため、通常通り処置を行う", "患者の呼気を吸うと活動員も即座に昏睡する", "防護服を着用するまで人工呼吸を開始してはならない", "患者に触れると皮膚から薬が移るため、一切触れてはいけない"],
+    correctIndex: 0,
+    explanation: "フェンタニルは呼気や汗からは排出されないため、適切なPPE（手袋等）をしていれば、活動員が中毒になるリスクはありません。"
+  },
+  {
+    id: 28,
+    category: "現場対応・資機材",
+    question: "ナロキソン鼻スプレーを使用する際、適切な体位（回復体位）をとる主な目的は何ですか？",
+    options: ["薬剤を奥まで届けるため", "患者を眠らせるため", "嘔吐物による窒息や誤嚥を防ぐため", "血圧を上げるため"],
+    correctIndex: 2,
+    explanation: "中毒からの回復過程で嘔吐することが多いため、窒息を防ぐために横向きの回復体位をとらせることが重要です。"
+  },
+  {
+    id: 29,
+    category: "現場対応・資機材",
+    question: "現場活動中に麻薬の「所在不明（紛失）」が発生した場合、管理者が最初に行うべき法的義務は何ですか？",
+    options: ["自費で買い直す", "速やかに都道府県知事に「麻薬事故届」を提出する", "帳簿を書き換えて隠蔽する", "次回の定期検査まで待つ"],
+    correctIndex: 1,
+    explanation: "盗難、紛失、破損等で麻薬に事故が生じた場合は、速やかに「麻薬事故届」を提出しなければなりません。"
+  },
+  {
+    id: 30,
+    category: "現場対応・資機材",
+    question: "フェンタニルパッチを剥がして廃棄する際、最も適切な方法はどれですか？",
+    options: ["そのまま丸めて捨てる", "粘着面を内側にして二つ折りにし、回収困難な形で処理する", "ハサミで細かく切って風に飛ばす", "水で洗ってから捨てる"],
+    correctIndex: 1,
+    explanation: "使用済みパッチにも薬剤が残っており、子供などが触れると致命的です。粘着面を合わせてから適切に廃棄する必要があります。"
+  },
+  // カテゴリー7：不法薬物と社会情勢
+  {
+    id: 31,
+    category: "社会情勢・トレンド",
+    question: "2024年の米国における薬物過剰摂取死亡者数は、前年比でどのような傾向にありますか？",
+    options: ["急激に増加した", "約25％減少した", "全く変化していない", "100倍になった"],
+    correctIndex: 1,
+    explanation: "2024年の暫定データでは、過剰摂取死亡者数は前年比で約25％の減少を記録しており、これは過去最大の減少幅です。"
+  },
+  {
+    id: 32,
+    category: "社会情勢・トレンド",
+    question: "メキシコの「シナロア・カルテル」や「ジェリスコ新世代カルテル（CJNG）」がフェンタニルを密輸する主なルートはどこですか？",
+    options: ["カナダ国境", "大西洋", "米国・メキシコ南西国境（SWB）", "空路のみ"],
+    correctIndex: 2,
+    explanation: "米国に流入する不法フェンタニルの大部分は、メキシコからの陸路（南西国境）を経由しています。"
+  },
+  {
+    id: 33,
+    category: "社会情勢・トレンド",
+    question: "近年検出されるようになった「メデトミジン（Medetomidine）」が危険視される理由は何ですか？",
+    options: ["色が綺麗だから", "キシラジンよりもさらに強力な鎮静作用と、ナロキソン抵抗性を持つから", "どこでも合法だから", "甘い味がするから"],
+    correctIndex: 1,
+    explanation: "メデトミジンは極めて強力な動物用麻酔薬であり、フェンタニルに混入されると心拍数低下などの致命的な副作用を強めます。"
+  },
+  {
+    id: 34,
+    category: "社会情勢・トレンド",
+    question: "依存症を「意志の弱さ」ではなく「脳の病気」と捉える治療アプローチにおいて、日本で広く行われているプログラムは何ですか？",
+    options: ["根性論ワークショップ", "SMARPP（セマープ：認知行動療法に基づいたプログラム）", "長期監禁療法", "催眠術"],
+    correctIndex: 1,
+    explanation: "SMARPPは国立精神・神経医療研究センターなどで開発された、科学的根拠に基づく依存症回復支援プログラムです。"
+  },
+  {
+    id: 35,
+    category: "社会情勢・トレンド",
+    question: "救急隊が現場で遭遇する「レインボー・フェンタニル」について、正しい事実はどれですか？",
+    options: ["色による成分や強さの違いは認められない", "赤色は青色より10倍強い", "黄色はナロキソンが効かない", "緑色は毒性が低い"],
+    correctIndex: 0,
+    explanation: "DEAのラボ分析では、錠剤の色によってフェンタニルの含有量や力価にmeasurable（測定可能な）違いはないことが確認されています。"
+  },
+  // カテゴリー8：その他の重要知識 (Q36-Q50: 記述式を4択に変換)
+  {
+    id: 36,
+    category: "詳細知識",
+    question: "フェンタニルの構造的特徴として、モルヒネよりも「分子の柔軟性が高い」理由は何ですか？",
+    options: ["分子量が非常に大きいため", "細長い構造と回転可能な結合を持っているため", "酸素原子が多く含まれるため", "環構造が完全に固定されているため"],
+    correctIndex: 1,
+    explanation: "フェンタニルは連結された環構造ではなく、細長い構造と回転可能な結合を持っているため、受容体にフィットしやすい特性があります。"
+  },
+  {
+    id: 37,
+    category: "詳細知識",
+    question: "主に大型野生動物用に使用される「カーフェンタニル」は、フェンタニルの約何倍の強度を持つとされていますか？",
+    options: ["約10倍", "約100倍", "約1,000倍", "強度は同じ"],
+    correctIndex: 1,
+    explanation: "カーフェンタニルはフェンタニルの約100倍、モルヒネの約1万倍の力価を持つとされ、極めて危険です。"
+  },
+  {
+    id: 38,
+    category: "詳細知識",
+    question: "フェンタニル中毒者の瞳孔が「ピンポイント（極端な縮瞳）」になる主なメカニズムはどれですか？",
+    options: ["交感神経が過剰に興奮するため", "視神経が麻痺するため", "動眼神経の副交感神経成分を刺激するため", "眼圧が急上昇するため"],
+    correctIndex: 2,
+    explanation: "オピオイドは動眼神経核（エディンガー・ウェストファル核）を刺激し、副交感神経成分を活性化させることで縮瞳を引き起こします。"
+  },
+  {
+    id: 39,
+    category: "法規制・管理",
+    question: "日本国内で「麻薬管理者」の免許を取得できる資格に含まれないのはどれですか？",
+    options: ["医師", "薬剤師", "看護師", "獣医師"],
+    correctIndex: 2,
+    explanation: "麻薬管理者は、医師、歯科医師、獣医師、薬剤師の資格を持つ者の中から選任されます。看護師は含まれません。"
+  },
+  {
+    id: 40,
+    category: "法規制・管理",
+    question: "麻薬帳簿の記録を間違えて記載した場合、法的に正しい修正方法はどれですか？",
+    options: ["修正液で消して書き直す", "二重線を引き、訂正印を押した脇に正しく記載する", "ページごと破り捨てる", "黒く塗りつぶす"],
+    correctIndex: 1,
+    explanation: "改ざん防止のため、修正液の使用は不可です。見え消し（二重線）と訂正印による修正が義務付けられています。"
+  },
+  {
+    id: 41,
+    category: "社会情勢・トレンド",
+    question: "米国の「Good Samaritan（善きサマリア人）法」は、どのような目的で制定されていますか？",
+    options: ["薬物密売人を逮捕しやすくするため", "通報者の違法薬物所持に対する訴追を免除し、救急通報を促すため", "医療費を無料にするため", "薬物を合法化するため"],
+    correctIndex: 1,
+    explanation: "過剰摂取の現場に居合わせた人が、逮捕を恐れて通報を躊躇しないよう、軽微な所持罪などを免責する法律です。"
+  },
+  {
+    id: 42,
+    category: "基礎知識・薬理",
+    question: "フェンタニルの「鼻スプレー剤」が、がんの突出痛（ブレイクスルーペイン）に有効な理由は何ですか？",
+    options: ["ゆっくりと長く効くから", "消化管への刺激が少ないから", "肝臓の初回通過効果を回避し、脳へ極めて迅速に到達するから", "安価で製造できるから"],
+    correctIndex: 2,
+    explanation: "鼻粘膜から直接吸収されることで肝代謝を回避し、静脈注射に近いスピードで作用を発現します。"
+  },
+  {
+    id: 43,
+    category: "現場対応・資機材",
+    question: "救急現場で傷病者にフェンタニルパッチが貼られているのを発見した際、家族等に確認すべき重要な情報はどれですか？",
+    options: ["パッチの値段", "いつ、どこに、何枚貼ったか、および加熱の有無", "パッチのデザイン", "購入した薬局の名前"],
+    correctIndex: 1,
+    explanation: "過剰投与の評価のため、貼付枚数や時間、そして吸収を促進させる「加熱（風呂や電気毛布）」があったかの確認が不可欠です。"
+  },
+  {
+    id: 44,
+    category: "現場対応・資機材",
+    question: "ナロキソン鼻スプレー（Narcan）の標準的な噴射方法はどれですか？",
+    options: ["1回の噴射で片方の鼻腔に全量を投与する", "半量ずつ左右の鼻腔に投与する", "口の中に噴射する", "空気中に散布する"],
+    correctIndex: 0,
+    explanation: "一般的な製剤は、1プッシュで1回分全量が噴霧される設計になっており、片方の鼻腔に全量を投与します。"
+  },
+  {
+    id: 45,
+    category: "法規制・管理",
+    question: "フェンタニルは、米国の規制物質法（CSA）ではどのスケジュール区分に分類されていますか？",
+    options: ["スケジュールI（医療用途なし・乱用リスク最高）", "スケジュールII（医療用途あり・乱用リスク高）", "スケジュールV（リスク低）", "規制対象外"],
+    correctIndex: 1,
+    explanation: "フェンタニルは医療用途が認められていますが、依存性と乱用リスクが高いため、厳格な管理が必要なスケジュールIIに分類されます。"
+  },
+  {
+    id: 46,
+    category: "現場対応・資機材",
+    question: "フェンタニルパッチが剥がれにくいように、上からドレッシング材（絆創膏など）で覆うことは推奨されますか？",
+    options: ["常に推奨される", "原則として不可（医師の指示が必要）", "剥がれかけたらガムテープで固定する", "温湿布で固定する"],
+    correctIndex: 1,
+    explanation: "密封することで皮膚の状態が変化し、吸収率（血中濃度）に予期せぬ影響を与える可能性があるため、原則として自己判断では行いません。"
+  },
+  {
+    id: 47,
+    category: "症状・中毒",
+    question: "フェンタニルによる「呼吸抑制」が進行した結果、二次的に引き起こされる深刻な病態はどれですか？",
+    options: ["呼吸性アルカローシス", "呼吸性アシドーシスおよび心停止", "高血糖", "低カリウム血症"],
+    correctIndex: 1,
+    explanation: "換気不全により体内にCO2が蓄積し（呼吸性アシドーシス）、低酸素血症と相まって最終的に心停止に至ります。"
+  },
+  {
+    id: 48,
+    category: "社会情勢・トレンド",
+    question: "2024年に、不法フェンタニルのマネーロンダリングへの関与が強く指摘された組織ネットワークはどれですか？",
+    options: ["イタリアン・マフィア", "中国系の地下銀行システム（CUBS）", "オートバイギャング", "海賊"],
+    correctIndex: 1,
+    explanation: "メキシコのカルテルが得た収益を洗浄するために、中国系の地下銀行ネットワークが利用されていることがDEAにより指摘されています。"
+  },
+  {
+    id: 49,
+    category: "法規制・管理",
+    question: "日本の麻薬及び向精神薬取締法において、麻薬帳簿の保存期間は何年ですか？",
+    options: ["1年間", "2年間", "5年間", "10年間"],
+    correctIndex: 1,
+    explanation: "麻薬帳簿は、最終の記載の日から2年間保存する義務があります。"
+  },
+  {
+    id: 50,
+    category: "現場対応・資機材",
+    question: "救急隊員が現場で「微量の粉末に触れて中毒になったかも」という強い不安（パニック）に駆られた場合、まず確認すべき客観的指標は？",
+    options: ["自身の心拍数の上昇のみ", "客観的なバイタル（SpO2、瞳孔径）", "周囲の人の反応", "ニュースの報道"],
+    correctIndex: 1,
+    explanation: "触れただけで中毒になるリスクは極めて低いです。不安による過換気と区別するため、SpO2低下や縮瞳がないかを確認し、冷静さを取り戻すことが重要です。"
+  }
+];
+
+// --- コンポーネント ---
+
+const FireDeptQuiz = () => {
+  const [currentQuestions, setCurrentQuestions] = useState([]);
+  const [userAnswers, setUserAnswers] = useState({}); // { questionId: selectedOptionIndex }
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+
+  // 初回マウント時とリトライ時に問題をシャッフルして10問選ぶ
+  const initQuiz = () => {
+    const shuffled = [...ALL_QUESTIONS].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 10);
+    setCurrentQuestions(selected);
+    setUserAnswers({});
+    setIsSubmitted(false);
+    setScore(0);
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => {
+    initQuiz();
+  }, []);
+
+  const handleOptionSelect = (qId, optionIndex) => {
+    if (isSubmitted) return;
+    setUserAnswers(prev => ({
+      ...prev,
+      [qId]: optionIndex
+    }));
+  };
+
+  const calculateScore = () => {
+    let correctCount = 0;
+    currentQuestions.forEach(q => {
+      if (userAnswers[q.id] === q.correctIndex) {
+        correctCount++;
+      }
+    });
+    setScore(correctCount);
+    setIsSubmitted(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const isAllAnswered = currentQuestions.length > 0 && currentQuestions.every(q => userAnswers.hasOwnProperty(q.id));
+
+  // --- Render Helpers ---
+
+  // 進捗バーの計算
+  const progress = Math.round((Object.keys(userAnswers).length / 10) * 100);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-amber-200">
+      
+      {/* Header */}
+      <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-50 border-b-4 border-amber-500">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <ShieldAlert className="w-8 h-8 text-amber-500" />
+            <div>
+              <h1 className="text-xl md:text-2xl font-serif tracking-wider font-bold">消防職員 e-Learning</h1>
+              <p className="text-xs text-slate-400">救急・現場活動知識向上プログラム</p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center space-x-2 text-amber-400 font-serif">
+            <Award className="w-5 h-5" />
+            <span className="text-sm font-semibold">Official Training Material</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        
+        {/* Intro Card (Only shown when not submitted) */}
+        {!isSubmitted && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-slate-700">
+            <div className="flex items-start space-x-4">
+              <Info className="w-6 h-6 text-slate-600 flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 mb-2 font-serif">学習のガイドライン</h2>
+                <p className="text-slate-600 leading-relaxed text-sm">
+                  本プログラムは、フェンタニル等の薬物事案に対する知識、現場安全、法規制を確認するためのものです。
+                  全50問のデータベースからランダムに<span className="font-bold text-amber-600">10問</span>が出題されます。
+                  全ての質問に回答後、「採点する」ボタンを押してください。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Score Card (Only shown after submission) */}
+        {isSubmitted && (
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden mb-8 animate-fade-in-down border border-slate-200">
+            <div className="bg-slate-900 p-6 text-center border-b-4 border-amber-500">
+              <p className="text-slate-400 text-sm uppercase tracking-widest mb-2 font-serif">Total Score</p>
+              <div className="flex justify-center items-end space-x-2">
+                <span className="text-6xl font-bold text-white font-serif">{score}</span>
+                <span className="text-2xl text-slate-400 mb-2">/ 10</span>
+              </div>
+              <p className="mt-4 text-amber-400 font-serif text-lg">
+                {score === 10 ? "Excellent - 極めて優秀な知識レベルです" : 
+                 score >= 8 ? "Great - 現場活動に十分な知識があります" :
+                 score >= 6 ? "Good - 基礎知識は習得されています" :
+                 "Review Needed - 復習を行い知識を定着させましょう"}
+              </p>
+            </div>
+            <div className="p-6 bg-slate-50 flex justify-center">
+               <button 
+                onClick={initQuiz}
+                className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95"
+              >
+                <RefreshCw className="w-5 h-5" />
+                <span>新しい問題で再挑戦する</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Question List */}
+        <div className="space-y-6">
+          {currentQuestions.map((q, index) => (
+            <div key={q.id} className={`bg-white rounded-xl shadow-sm border transition-all duration-300 ${isSubmitted ? (userAnswers[q.id] === q.correctIndex ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-rose-500') : 'border-slate-200 hover:shadow-md'}`}>
+              
+              {/* Question Header */}
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="inline-block bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full font-semibold">
+                    Q{index + 1} / 10 &middot; {q.category}
+                  </span>
+                  {isSubmitted && (
+                    <div className="flex items-center space-x-1">
+                      {userAnswers[q.id] === q.correctIndex ? (
+                        <span className="flex items-center text-emerald-600 font-bold text-sm"><CheckCircle className="w-4 h-4 mr-1"/> 正解</span>
+                      ) : (
+                        <span className="flex items-center text-rose-600 font-bold text-sm"><AlertTriangle className="w-4 h-4 mr-1"/> 不正解</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className="text-lg md:text-xl font-bold text-slate-800 leading-relaxed mb-6 font-serif">
+                  {q.question}
+                </h3>
+
+                {/* Options */}
+                <div className="grid gap-3">
+                  {q.options.map((option, optIndex) => {
+                    let btnClass = "w-full text-left p-4 rounded-lg border transition-all flex items-start space-x-3 ";
+                    
+                    if (isSubmitted) {
+                      if (optIndex === q.correctIndex) {
+                        btnClass += "bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500 text-emerald-900"; // Correct answer styling
+                      } else if (optIndex === userAnswers[q.id] && optIndex !== q.correctIndex) {
+                        btnClass += "bg-rose-50 border-rose-300 text-rose-900"; // Wrong selected styling
+                      } else {
+                        btnClass += "bg-white border-slate-100 text-slate-400 opacity-60"; // Unselected others
+                      }
+                    } else {
+                      if (userAnswers[q.id] === optIndex) {
+                        btnClass += "bg-slate-800 border-slate-800 text-white shadow-md"; // Selected state (active)
+                      } else {
+                        btnClass += "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"; // Default state
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={optIndex}
+                        onClick={() => handleOptionSelect(q.id, optIndex)}
+                        disabled={isSubmitted}
+                        className={btnClass}
+                      >
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-xs mt-0.5 ${
+                          isSubmitted 
+                            ? (optIndex === q.correctIndex ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300")
+                            : (userAnswers[q.id] === optIndex ? "border-white bg-white text-slate-900" : "border-slate-400 text-slate-500")
+                        }`}>
+                          {optIndex + 1}
+                        </div>
+                        <span className="text-sm md:text-base font-medium">{option}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Explanation (Shown only after submit) */}
+                {isSubmitted && (
+                  <div className="mt-6 pt-5 border-t border-slate-100 animate-fade-in">
+                    <div className="flex items-start space-x-3 text-slate-700 bg-slate-50 p-4 rounded-lg">
+                      <BookOpen className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="block text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">解説</span>
+                        <p className="text-sm leading-relaxed">{q.explanation}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Action Area */}
+        {!isSubmitted && (
+          <div className="sticky bottom-6 mt-8 z-40">
+             {/* Progress Bar */}
+            <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 border border-slate-200 max-w-2xl mx-auto">
+              <div className="flex justify-between text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                <span>Progress</span>
+                <span>{Object.keys(userAnswers).length} / 10 Answered</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div className="bg-amber-500 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+              </div>
+              
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={calculateScore}
+                  disabled={!isAllAnswered}
+                  className={`w-full md:w-auto px-12 py-3 rounded-lg font-bold text-white shadow-lg transition-all transform flex items-center justify-center space-x-2
+                    ${isAllAnswered 
+                      ? "bg-slate-900 hover:bg-slate-800 hover:-translate-y-1 cursor-pointer" 
+                      : "bg-slate-400 cursor-not-allowed"}`}
+                >
+                  <Scale className="w-5 h-5" />
+                  <span>採点する</span>
+                </button>
+              </div>
+              {!isAllAnswered && (
+                <p className="text-center text-xs text-rose-500 mt-2 font-medium">
+                  ※ 全ての問題に回答してください
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-8 mt-12 border-t-4 border-amber-600">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <Activity className="w-8 h-8 mx-auto text-amber-600 mb-4" />
+          <p className="text-sm mb-2 font-serif text-slate-300">Fire Service Medical Education System</p>
+          <p className="text-xs text-slate-500">
+            Based on current pharmaceutical & safety protocols.<br/>
+            Designed for professional training purposes.
+          </p>
+          <div className="mt-6 text-xs text-slate-600">
+            &copy; 2024 Fire Dept e-Learning. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default FireDeptQuiz;
