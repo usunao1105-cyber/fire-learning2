@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地方公務員の兼業FAQ 2025</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (JSX変換用) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- カスタムアニメーション設定 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* スクロールバーのカスタマイズ（任意） */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- アイコンコンポーネント (Lucide ReactのSVGをインライン化) ---
+        const IconBase = ({ children, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const ChevronDown = (props) => <IconBase {...props}><path d="m6 9 6 6 6-6"/></IconBase>;
+        const ChevronUp = (props) => <IconBase {...props}><path d="m18 15-6-6-6 6"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></IconBase>;
+        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
+        const Trophy = (props) => <IconBase {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
+        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
+        const Briefcase = (props) => <IconBase {...props}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></IconBase>;
+        const Scale = (props) => <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></IconBase>;
+        const FileText = (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
+        const Banknote = (props) => <IconBase {...props}><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconBase>;
+
+        // --- データ定義 ---
+        const FAQ_DATA = [
+            {
+                category: "制度の基本・法的根拠",
+                icon: <Scale className="w-5 h-5" />,
+                items: [
+                    { q: "地方公務員が兼業をする際の法的根拠は何ですか。", a: "地方公務員法第38条に基づき、任命権者の許可を得ることで営利企業への従事や自営兼業が可能となります。" },
+                    { q: "2025年6月の制度改正で、運用の何が変わったのですか。", a: "従来の「原則禁止」という消極的姿勢から、**「地域の実情に即して柔軟に認める」**という積極的な運用へと転換されました。" },
+                    { q: "全ての副業が自由に行える「完全解禁」なのですか。", a: "いいえ。あくまで**「許可制」**であり、職務の公正性などを個別に審査する仕組みは維持されています。" },
+                    { q: "許可を判断する際の「3つの基本的原則」とは何ですか。", a: "**「公務能率の確保」「職務の公正の確保」「職員の品位の保持」**を満たすことが必須です。" },
+                    { q: "なぜ今、兼業を促進しているのですか。", a: "深刻な人材不足への対応や、職員のスキルを地域社会に還元する**「人的資源の有効活用」**が主な目的です。" }
+                ]
+            },
+            {
+                category: "許可される活動内容",
+                icon: <Briefcase className="w-5 h-5" />,
+                items: [
+                    { q: "営利企業の従業員（アルバイト）として働くことはできますか。", a: "はい。基本的原則を満たせば、営利企業の従業員としての兼業も認められ得ることが明確化されました。" },
+                    { q: "スポーツのインストラクターや家庭教師は認められますか。", a: "スキルや特技を活かした活動として、基本的原則を満たせば許可の対象となります。" },
+                    { q: "YouTubeやブログでの広告収入（アフィリエイト）は可能ですか。", a: "趣味の範囲は自由ですが、営利目的や継続性が高い場合は、自営兼業としての承認が必要になる場合があります。" },
+                    { q: "フリマアプリ（メルカリ等）での販売は副業ですか。", a: "不用品の処分は兼業に当たりませんが、転売目的での大量出品などは事業とみなされ、許可が必要（または禁止）となります。" },
+                    { q: "NPO法人やボランティア団体での活動は認められますか。", a: "公益性が高いため、職務との利害関係がなければ積極的に認められる傾向にあります。" },
+                    { q: "「せどり（転売）」は許可されますか。", a: "付加価値のない転売事業は、公務の信頼を損なう恐れがあるため原則禁止とされています。" },
+                    { q: "不動産賃貸（アパート経営）の許可基準はどうなっていますか。", a: "一般的に**「5棟10室未満、かつ賃貸料年額500万円未満」**であれば許可不要とされることが多いですが、これを超える場合は承認が必要です。" },
+                    { q: "太陽光発電による売電は可能ですか。", a: "定格出力10キロワット以上の設備で売電を行う場合は、自営兼業としての承認が必要になります。" },
+                    { q: "小規模な農業は認められますか。", a: "自給自足目的は自由ですが、耕作面積30アール以上などの規模になると承認が必要になります。" }
+                ]
+            },
+            {
+                category: "勤務条件・報酬",
+                icon: <Banknote className="w-5 h-5" />,
+                items: [
+                    { q: "兼業できる時間数に上限はありますか。", a: "国家公務員の基準（週8時間以内、1か月30時間以内、1日3時間以内）が参考値とされていますが、最終的な上限は各自治体が定めます。" },
+                    { q: "報酬額に制限はありますか。", a: "一律の金額制限ではなく、内容に照らして**「社会通念上相当と認められる範囲」**であるかが個別に判断されます。" },
+                    { q: "年次有給休暇を使って兼業してもよいですか。", a: "兼業はあくまで勤務時間外（休日や夜間）に行うべきものであり、年休を取得して計画的に兼業を行うことは原則認められません。" },
+                    { q: "報酬が低すぎる場合（安価な労働力となる場合）も問題になりますか。", a: "はい。職員が安価な労働力として買いたたかれることも懸念されており、報酬の妥当性がチェックされます。" }
+                ]
+            },
+            {
+                category: "手続・運用",
+                icon: <FileText className="w-5 h-5" />,
+                items: [
+                    { q: "許可申請はいつまでに行う必要がありますか。", a: "自治体によりますが、一般的には活動開始予定の1か月前までに申請書を提出します。" },
+                    { q: "許可基準はどこで確認できますか。", a: "透明性を確保するため、各自治体は庁内外（住民等）に許可基準を公表することが求められています。" },
+                    { q: "一度許可を得れば、ずっと兼業を続けられますか。", a: "いいえ。通常は**一定の有効期間（1年〜数年）**が設定されており、定期的な更新や実績報告が必要です。" },
+                    { q: "人事異動で部署が変わった場合、再申請は必要ですか。", a: "はい。職務内容が変わると利害関係の状況も変わるため、有効期間内でも再度許可手続が必要になります。" },
+                    { q: "所属長（上司）の同意は必要ですか。", a: "はい。公務の遂行や健康管理に支障がないかを確認するため、所属長を経由して申請するのが一般的です。" }
+                ]
+            },
+            {
+                category: "リスク管理・健康",
+                icon: <ShieldAlert className="w-5 h-5" />,
+                items: [
+                    { q: "無許可で副業をするとどうなりますか。", a: "職務専念義務違反等により、免職・停職・減給・戒告などの懲戒処分の対象となります。" },
+                    { q: "副業をしていることは、なぜ職場にバレるのですか。", a: "住民等からの通報のほか、副収入によって住民税額が上がり、給与担当者が気づくケースが多いです。" },
+                    { q: "兼業先での労働時間は、公務の労働時間と通算されますか。", a: "はい。労働基準法に基づき、公務と兼業先の労働時間を通算して管理し、上限規制を遵守する必要があります。" },
+                    { q: "副業が原因で本来の職務に支障が出た場合はどうなりますか。", a: "許可が取り消されるほか、懲戒処分の対象となる可能性があります。" },
+                    { q: "家族名義であれば、公務員本人が実質的に働いても大丈夫ですか。", a: "いいえ。単なる**「名義貸し」は法律違反**であり、本人が従事している実態があれば処分の対象となります。" },
+                    { q: "兼業による過労を防ぐために自治体が行うことは？", a: "上司による勤務状況の把握や、産業医との相談体制の活用、必要に応じた兼業時間の抑制指導などを行います。" },
+                    { q: "兼業での経験は、人事評価にプラスになりますか。", a: "兼業そのものは評価対象外ですが、そこで得た知見を公務の能率向上やサービス改善に活かした場合は、評価の材料になり得ます。" }
+                ]
+            }
+        ];
+
+        // 全質問リスト
+        const FLAT_QUESTIONS = FAQ_DATA.flatMap((cat, catIndex) => 
+            cat.items.map((item, itemIndex) => ({
+                ...item,
+                id: `${catIndex}-${itemIndex}`,
+                categoryId: catIndex
+            }))
+        );
+
+        const TOTAL_COUNT = FLAT_QUESTIONS.length;
+
+        // --- メインコンポーネント ---
+        function SideJobFAQApp() {
+            // localStorageから状態を復元（ブラウザを閉じても進捗を保存）
+            const [readIds, setReadIds] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('faq_read_ids');
+                    return saved ? new Set(JSON.parse(saved)) : new Set();
+                } catch (e) {
+                    return new Set();
+                }
+            });
+
+            const [openIds, setOpenIds] = useState(new Set());
+            const [showCompletion, setShowCompletion] = useState(false);
+            const [showResetModal, setShowResetModal] = useState(false);
+            const scrollRef = useRef(null);
+
+            // 状態が変化したらlocalStorageに保存
+            useEffect(() => {
+                localStorage.setItem('faq_read_ids', JSON.stringify([...readIds]));
+            }, [readIds]);
+
+            // 読了完了時のチェック
+            useEffect(() => {
+                if (readIds.size === TOTAL_COUNT && TOTAL_COUNT > 0) {
+                     if(!showCompletion) {
+                        setShowCompletion(true);
+                     }
+                }
+            }, [readIds]);
+
+            // 読了率の計算
+            const progress = Math.min(100, Math.round((readIds.size / TOTAL_COUNT) * 100));
+
+            // ランク判定
+            const getRank = () => {
+                if (progress === 100) return "制度マイスター（ミツバチ級）";
+                if (progress >= 80) return "エキスパート公務員";
+                if (progress >= 50) return "中堅チャレンジャー";
+                if (progress >= 20) return "制度学習ビギナー";
+                return "未開拓のクマ";
+            };
+
+            const toggleQuestion = (id) => {
+                const newOpenIds = new Set(openIds);
+                if (newOpenIds.has(id)) {
+                    newOpenIds.delete(id);
+                } else {
+                    newOpenIds.add(id);
+                    // 開いた瞬間に既読にする
+                    if (!readIds.has(id)) {
+                        const newReadIds = new Set(readIds);
+                        newReadIds.add(id);
+                        setReadIds(newReadIds);
+                        
+                        // コンプリート時のエフェクトトリガー
+                        if (newReadIds.size === TOTAL_COUNT) {
+                            setTimeout(() => {
+                                setShowCompletion(true);
+                                // 完了メッセージへスクロール
+                                setTimeout(() => {
+                                    scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                            }, 500);
+                        }
+                    }
+                }
+                setOpenIds(newOpenIds);
+            };
+
+            const openResetModal = () => {
+                setShowResetModal(true);
+            };
+
+            const executeReset = () => {
+                setReadIds(new Set());
+                setOpenIds(new Set());
+                setShowCompletion(false);
+                setShowResetModal(false);
+                // localStorageはuseEffectにより自動的に[]で上書きされます
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            return (
+                <div className="min-h-screen pb-20 font-sans relative">
+                
+                {/* リセット確認モーダル */}
+                {showResetModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in p-4 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl transform transition-all border border-slate-200">
+                            <div className="flex items-center gap-3 text-amber-600 mb-2">
+                                <AlertTriangle className="w-6 h-6" />
+                                <h3 className="text-lg font-bold text-slate-800">進捗のリセット</h3>
+                            </div>
+                            <p className="text-slate-600 mb-6 leading-relaxed">これまでの学習進捗をすべて消去して、最初からやり直しますか？</p>
+                            <div className="flex gap-3 justify-end">
+                                <button 
+                                    onClick={() => setShowResetModal(false)}
+                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+                                >
+                                    キャンセル
+                                </button>
+                                <button 
+                                    onClick={executeReset}
+                                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium shadow-md hover:shadow-lg transform active:scale-95 transition-all"
+                                >
+                                    リセットする
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ヘッダーエリア */}
+                <header className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-6 shadow-lg sticky top-0 z-20">
+                    <div className="max-w-3xl mx-auto">
+                    <div className="flex justify-between items-start mb-2">
+                        <div>
+                        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                            <BookOpen className="w-6 h-6" />
+                            地方公務員の兼業FAQ
+                            <span className="bg-white/20 text-xs px-2 py-1 rounded-full border border-white/30">2025年版</span>
+                        </h1>
+                        <p className="text-blue-100 text-sm mt-1">最新の総務省通知・運用指針対応</p>
+                        </div>
+                        <div className="text-right">
+                        <div className="text-2xl font-bold font-mono leading-none">
+                            {readIds.size}<span className="text-sm text-blue-200">/{TOTAL_COUNT}</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {/* プログレスバー */}
+                    <div className="mt-4">
+                        <div className="flex justify-between text-xs text-blue-100 mb-1">
+                        <span>Rank: {getRank()}</span>
+                        <span>{progress}% Complete</span>
+                        </div>
+                        <div className="w-full bg-blue-900/50 rounded-full h-3 overflow-hidden border border-blue-500/30">
+                        <div 
+                            className="bg-yellow-400 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                        </div>
+                    </div>
+                    </div>
+                </header>
+
+                <main className="max-w-3xl mx-auto p-4 md:p-6 space-y-8">
+                    
+                    {/* 説明カード */}
+                    {readIds.size === 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+                        <Info className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                        <p className="text-sm text-blue-800 font-medium">使い方</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                            質問をタップして回答を確認してください。30問すべてを確認すると、制度理解の証として特別なメッセージが表示されます。
+                        </p>
+                        </div>
+                    </div>
+                    )}
+
+                    {/* カテゴリごとのFAQリスト */}
+                    {FAQ_DATA.map((category, catIndex) => (
+                    <section key={catIndex} className="space-y-4">
+                        <h2 className="flex items-center gap-2 text-lg font-bold text-slate-700 border-b-2 border-indigo-100 pb-2 mt-8 mb-4">
+                        <span className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
+                            {category.icon}
+                        </span>
+                        {category.category}
+                        </h2>
+
+                        <div className="grid gap-3">
+                        {category.items.map((item, itemIndex) => {
+                            const id = `${catIndex}-${itemIndex}`;
+                            const isOpen = openIds.has(id);
+                            const isRead = readIds.has(id);
+
+                            return (
+                            <button
+                                key={id}
+                                onClick={() => toggleQuestion(id)}
+                                className={`
+                                w-full text-left bg-white rounded-xl shadow-sm border transition-all duration-200 group
+                                ${isOpen ? 'ring-2 ring-indigo-400 border-transparent shadow-md' : 'border-slate-200 hover:border-indigo-300'}
+                                `}
+                            >
+                                <div className="p-4 flex items-start gap-3">
+                                <div className={`
+                                    flex-shrink-0 mt-0.5 transition-colors duration-300
+                                    ${isRead ? 'text-green-500' : 'text-slate-300'}
+                                `}>
+                                    <CheckCircle className={`w-6 h-6 ${isRead ? 'fill-green-50' : ''}`} />
+                                </div>
+                                
+                                <div className="flex-grow">
+                                    <div className="font-semibold text-slate-800 text-base md:text-lg leading-snug">
+                                    {item.q}
+                                    </div>
+                                    
+                                    <div className={`
+                                    grid transition-all duration-300 ease-in-out
+                                    ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-3 pb-1' : 'grid-rows-[0fr] opacity-0'}
+                                    `}>
+                                    <div className="overflow-hidden">
+                                        <div className="text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-100 text-base md:text-base leading-relaxed">
+                                        {/* 重要部分の太字強調をパースする簡易的な処理 */}
+                                        {item.a.split('**').map((part, i) => 
+                                            i % 2 === 1 ? <strong key={i} className="text-indigo-700 bg-indigo-50 px-1 rounded">{part}</strong> : part
+                                        )}
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex-shrink-0 mt-1 text-slate-400">
+                                    {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                </div>
+                                </div>
+                            </button>
+                            );
+                        })}
+                        </div>
+                    </section>
+                    ))}
+
+                    {/* コンプリート時のメッセージ */}
+                    {showCompletion && (
+                    <div ref={scrollRef} className="mt-12 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 md:p-8 shadow-xl text-center animate-bounce-in">
+                        <div className="inline-block bg-yellow-100 p-4 rounded-full mb-4">
+                        <Trophy className="w-12 h-12 text-yellow-600" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-800 mb-2">全30項目 読了達成！</h3>
+                        <p className="text-yellow-700 font-bold mb-6">ランク：制度マイスター（ミツバチ級）</p>
+                        
+                        <div className="bg-white/60 p-6 rounded-xl border border-yellow-100 text-left max-w-xl mx-auto shadow-sm">
+                        <p className="text-lg leading-relaxed text-slate-700 font-medium">
+                            今回の改正による地方公務員の姿は、
+                            <br /><br />
+                            <span className="block text-slate-400 text-sm mb-1">Before:</span>
+                            「自らの殻に閉じこもる冬眠中のクマ」
+                            <br /><br />
+                            <span className="block text-center text-slate-400 my-1">⬇︎</span>
+                            <span className="block text-slate-400 text-sm mb-1">After:</span>
+                            <span className="text-orange-600 font-bold text-xl">
+                            「外の蜜（知見）を吸って巣（役所）に持ち帰り、組織全体を活性化させるミツバチ」
+                            </span>
+                            <br /><br />
+                            へと変化したと言えるでしょう。<br />
+                            ただし、羽を広げる場所や時間は、あらかじめ決められた「許可」という地図の範囲内でなければなりません。
+                        </p>
+                        </div>
+                        <p className="mt-6 text-sm text-slate-500">学習お疲れ様でした！</p>
+                    </div>
+                    )}
+
+                    {/* リセットボタンエリア */}
+                    <div className="pt-10 pb-6 text-center">
+                    {readIds.size > 0 && (
+                        <button 
+                        onClick={openResetModal}
+                        className="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-1 mx-auto transition-colors"
+                        >
+                        <RefreshCw className="w-4 h-4" />
+                        進捗をリセットして最初から読む
+                        </button>
+                    )}
+                    </div>
+
+                </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SideJobFAQApp />);
+    </script>
+</body>
+</html>
