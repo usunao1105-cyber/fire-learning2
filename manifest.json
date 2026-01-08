@@ -1,7 +1,7 @@
 {
   "name": "消防職員eラーニング",
   "short_name": "消防e-L",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#c62828",
