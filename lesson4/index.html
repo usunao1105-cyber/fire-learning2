@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消防職員向け e-Learning</title>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans JP & Serif) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .font-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // -----------------------------------------------------------------------------
+        // Icons (Inline SVG Components to avoid external dependencies issues)
+        // -----------------------------------------------------------------------------
+        const CheckCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        );
+        const XCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        );
+        const AlertCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        );
+        const RefreshCw = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        );
+        const Award = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+        );
+        const BookOpen = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        );
+        const ShieldCheck = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+
+        // -----------------------------------------------------------------------------
+        // Data: 全50問のデータベース
+        // -----------------------------------------------------------------------------
+        const FULL_QUESTION_DATA = [
+            // 第1章
+            {
+                id: 1,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹ウイルスの主な感染経路として正しい組み合わせはどれですか？",
+                options: ["空気感染、飛沫感染、接触感染", "経口感染、飛沫感染、血液感染", "接触感染、性行為感染、空気感染", "飛沫感染、経口感染、母子感染"],
+                correctIndex: 0,
+                explanation: "麻疹ウイルスは非常に感染力が強く、空気感染、飛沫感染、接触感染のすべてで広がります。"
+            },
+            {
+                id: 2,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹の潜伏期間は通常どれくらいですか？",
+                options: ["1〜3日間", "5〜7日間", "10〜12日間", "20〜30日間"],
+                correctIndex: 2,
+                explanation: "免疫が不十分な人が感染すると、通常10〜12日間の潜伏期間を経て発症します。"
+            },
+            {
+                id: 3,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹の初期症状（カタル期）で特徴的なものはどれですか？",
+                options: ["激しい下痢と嘔吐", "発熱、咳、鼻水、結膜充血", "手足のしびれと麻痺", "局所的な皮膚の痛み"],
+                correctIndex: 1,
+                explanation: "発症初期は、38度台の発熱、咳、鼻水、目やに、目の充血などの風邪に似た症状が現れます。"
+            },
+            {
+                id: 4,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹に特徴的な、口の中に見られる白い斑点を何と呼びますか？",
+                options: ["コプリック斑", "カポジ斑", "フォルヒハイマー斑", "ハンター斑"],
+                correctIndex: 0,
+                explanation: "頬の内側の粘膜にできる白い斑点は「コプリック斑」と呼ばれ、麻疹に特徴的な所見です。"
+            },
+            {
+                id: 5,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹の発疹が出るタイミングはいつですか？",
+                options: ["発熱が始まった直後", "高熱が2〜3日続いた後、熱がさらに上がる際", "解熱してから1週間後", "潜伏期間中の無症状時"],
+                correctIndex: 1,
+                explanation: "2〜3日熱が続いた後、39度以上の高熱と共に顔面から全身に発疹が広がります。"
+            },
+            {
+                id: 6,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹の感染力が最も強い時期はいつですか？",
+                options: ["潜伏期間の初期", "発疹が出現した4日前から出現後4日間", "発疹がすべて消えた後", "合併症の肺炎が治った後"],
+                correctIndex: 1,
+                explanation: "麻疹は発疹が出る4日前（カタル期）から出現後4日間が最も感染力が強く、本人が気づかないうちに広めてしまうリスクがあります。"
+            },
+            {
+                id: 7,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹に対する最も有効な予防手段は何ですか？",
+                options: ["発熱時の抗生物質服用", "マスクの二重着用", "ワクチンの2回接種", "徹底したうがい"],
+                correctIndex: 2,
+                explanation: "麻疹に特効薬はなく、唯一の有効な予防策はワクチン接種による免疫獲得です。"
+            },
+            {
+                id: 8,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹ウイルスを吸い込んだ場合、免疫がない人の発症率はどれくらいですか？",
+                options: ["約10%", "約30%", "約50%", "ほぼ100%"],
+                correctIndex: 3,
+                explanation: "麻疹は極めて感染力が強く、免疫がない人が感染するとほぼ確実に発症します。"
+            },
+            {
+                id: 9,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "麻疹ウイルスは空気中でどれくらい生存可能とされていますか？",
+                options: ["約2時間以内", "約24時間", "約1週間", "乾燥に強いため1ヶ月以上"],
+                correctIndex: 0,
+                explanation: "麻疹ウイルスの空気中での生存期間は約2時間以内とされています。"
+            },
+            {
+                id: 10,
+                category: "第1章：麻疹の基本特性と症状",
+                question: "典型的な麻疹ではない「修飾麻疹」が起こる原因として多いのはどれですか？",
+                options: ["過去に一度も接種していない", "ワクチンによる免疫が不十分、または時間の経過で減衰した", "別のウイルスとの同時感染", "遺伝的な体質"],
+                correctIndex: 1,
+                explanation: "ワクチンを接種していても免疫が十分に定着していない、あるいは抗体価が低下している場合、軽症で典型的な症状を示さない「修飾麻疹」になることがあります。"
+            },
+            // 第2章
+            {
+                id: 11,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年4月時点で、日本国内の麻疹報告数は前年（2024年）同期と比較してどうなっていますか？",
+                options: ["前年を下回っている", "前年の約1.6倍で、すでに年間届出数に迫っている", "2020年のパンデミック時と同等", "ほぼ横ばいである"],
+                correctIndex: 1,
+                explanation: "2025年は第11週時点で32例が報告され、前年同期の1.6倍と急増しています。"
+            },
+            {
+                id: 12,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年の世界的な麻疹流行において、報告数が激増している地域はどこですか？",
+                options: ["西太平洋地域（東南アジアなど）", "北極圏地域", "日本国内のみ", "オセアニアの孤島"],
+                correctIndex: 0,
+                explanation: "WHOによると、西太平洋地域では2022年から2024年にかけて報告数が743％増加しました。"
+            },
+            {
+                id: 13,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年の国内症例で、推定感染地域として最も多く報告されている海外の国はどこですか？",
+                options: ["アメリカ", "イタリア", "ベトナム", "オーストラリア"],
+                correctIndex: 2,
+                explanation: "推定感染地域を国外とする症例のうち、ベトナムでの感染が最も多く報告されています。"
+            },
+            {
+                id: 14,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年にアメリカで発生した麻疹アウトブレイクについて正しい記述はどれですか？",
+                options: ["症例はすべて2回接種済みだった", "テキサス州などで大規模発生し、10年ぶりの死者が確認された", "全米50州すべてで発生した", "高齢者のみが感染した"],
+                correctIndex: 1,
+                explanation: "アメリカでは2025年にテキサス州を中心にアウトブレイクが発生し、10年ぶりの死亡例（ワクチン未接種の小児）が報告されました。"
+            },
+            {
+                id: 15,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "日本がWHOから「麻疹排除状態」の認定を受けたのはいつですか？",
+                options: ["1978年", "2000年", "2015年", "2025年"],
+                correctIndex: 2,
+                explanation: "日本は2015年にWHOから麻疹排除状態であると認定されました。"
+            },
+            {
+                id: 16,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年に国内で報告された症例の年齢層で、最も割合が高いのはどこですか？",
+                options: ["0歳児", "10代", "20代〜30代の若年成人", "65歳以上の高齢者"],
+                correctIndex: 2,
+                explanation: "2025年の症例のうち、20代が最も多く（約28〜44%）、次いで30代が多くなっています。"
+            },
+            {
+                id: 17,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年の日本における流行再燃の主な要因として挙げられないものはどれですか？",
+                options: ["パンデミック後の国際的な人の移動の再活性化", "ワクチン未接種者や免疫不十分な層の存在", "MRワクチンの供給不足", "野生動物による媒介"],
+                correctIndex: 3,
+                explanation: "麻疹の宿主は人間のみであり、流行の要因は輸入症例、免疫ギャップ、供給不安定などが複合したものです。"
+            },
+            {
+                id: 18,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年の国内症例で判明している主なウイルスの遺伝子型は何ですか？",
+                options: ["A型およびC型", "B3型およびD8型", "オミクロン型", "E1型"],
+                correctIndex: 1,
+                explanation: "2025年の国内報告ではB3型が最も多く、次いでD8型が確認されています。"
+            },
+            {
+                id: 19,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年に日本で開催され、麻疹の流入リスクを高める要因として指摘されたイベントは何ですか？",
+                options: ["東京オリンピック", "大阪・関西万博", "福岡アジア大会", "日本シリーズ"],
+                correctIndex: 1,
+                explanation: "大阪・関西万博による訪日客の増加が、麻疹ウイルスの持ち込みリスクを高める要因として挙げられています。"
+            },
+            {
+                id: 20,
+                category: "第2章：2025年の流行状況と特徴",
+                question: "2025年の国内症例のうち、ワクチンを「2回接種済み」でも発症した人の割合はどれくらいですか？",
+                options: ["0%", "約21%", "約80%", "全員"],
+                correctIndex: 1,
+                explanation: "約2割の症例は2回接種済みでしたが、これらは「修飾麻疹」として軽症で済む傾向にあります。"
+            },
+            // 第3章
+            {
+                id: 21,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "現在の日本の定期接種スケジュールにおいて、麻疹・風疹（MR）ワクチンは何回接種ですか？",
+                options: ["1回（1歳時のみ）", "2回（1歳時と小学校入学前）", "3回（中学校入学前を追加）", "毎年の追加接種"],
+                correctIndex: 1,
+                explanation: "現在は第1期（1歳）と第2期（小学校入学前の1年間）の計2回が定期接種となっています。"
+            },
+            {
+                id: 22,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "日本でMRワクチンの「2回接種制」が確立されたのはいつからですか？",
+                options: ["1978年", "1995年", "2006年度", "2025年"],
+                correctIndex: 2,
+                explanation: "日本で現在の2回接種制が導入されたのは2006年度からです。"
+            },
+            {
+                id: 23,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "現在の20代〜40代に「免疫ギャップ」がある歴史的な理由は何ですか？",
+                options: ["その世代はワクチンが禁止されていた", "定期接種が「1回接種」のみの制度であった時期があるため", "自然感染による免疫の方が弱いため", "その世代だけ別のワクチンを打ったため"],
+                correctIndex: 1,
+                explanation: "1978年から2006年までに生まれた世代は定期接種が1回のみであったため、免疫が不十分な層が存在します。"
+            },
+            {
+                id: 24,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "ワクチンの接種歴が「1回」のみの場合に起こりうる、時間の経過で免疫が弱まる現象を何と言いますか？",
+                options: ["一次性ワクチン不全", "二次性ワクチン不全（SVF）", "三次性アナフィラキシー", "ワクチン過剰反応"],
+                correctIndex: 1,
+                explanation: "1回接種を受けた人でも、時間の経過と共に抗体価が低下し、感染・発症するリスクを「二次性ワクチン不全（Secondary Vaccine Failure）」と呼びます。"
+            },
+            {
+                id: 25,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "2024年に発生したMRワクチンの供給不足の主な原因は何ですか？",
+                options: ["原材料が枯渇した", "製造販売業者（武田薬品工業）による自主回収と出荷停止", "全員が一度に接種を希望した", "輸入が制限された"],
+                correctIndex: 1,
+                explanation: "武田薬品工業の製造工程におけるトラブルにより、自主回収と2025年3月末までの出荷停止が発生し、供給不足となりました。"
+            },
+            {
+                id: 26,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "ワクチンの供給不足を受けて厚生労働省が実施した異例の措置は何ですか？",
+                options: ["ワクチン接種の全面禁止", "令和6年度（2024年度）対象者の定期接種期間を2年間延長", "1回接種で十分とする方針転換", "高齢者のみに接種を限定"],
+                correctIndex: 1,
+                explanation: "供給不足で期限内に打てなかった子供たちのために、公費での接種期間を2027年3月末まで延長する特例措置が取られました。"
+            },
+            {
+                id: 27,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "麻疹の排除状態を維持するために必要な集団免疫の閾値（接種率）は何％以上ですか？",
+                options: ["50%", "75%", "95%", "100%"],
+                correctIndex: 2,
+                explanation: "麻疹の非常に強い感染力を抑えるためには、集団の95％以上が2回の接種を完了していることが不可欠です。"
+            },
+            {
+                id: 28,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "接種歴が不明な場合、実務上推奨される対応はどれですか？",
+                options: ["抗体検査の結果を待ってから判断する", "抗体検査を待たずに速やかにワクチンを接種する", "過去に打ったと信じて何もしない", "発症するまで待つ"],
+                correctIndex: 1,
+                explanation: "流行期や渡航前などは、時間をかけずに接種を優先することが推奨されます。"
+            },
+            {
+                id: 29,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "MRワクチン（生ワクチン）を接種してはいけない「禁忌」に該当するのは誰ですか？",
+                options: ["授乳中の女性", "妊婦", "医療従事者", "50歳以上の男性"],
+                correctIndex: 1,
+                explanation: "妊娠中は生ワクチンの接種が禁忌であり、妊娠を希望する場合は妊娠前に接種を済ませる必要があります。"
+            },
+            {
+                id: 30,
+                category: "第3章：ワクチンと免疫ギャップ",
+                question: "授乳中の女性が麻疹ワクチンを接種することは可能ですか？",
+                options: ["禁忌である", "可能であり、母乳への影響もない", "断乳してから1ヶ月後なら可能", "医師の特別な許可がなければ不可能"],
+                correctIndex: 1,
+                explanation: "授乳中の接種は可能であり、母乳への影響もありません。"
+            },
+            // 第4章
+            {
+                id: 31,
+                category: "第4章：合併症と重症化リスク",
+                question: "麻疹による死亡の最大の原因となる合併症は何ですか？",
+                options: ["中耳炎", "肺炎", "脳炎", "下痢"],
+                correctIndex: 1,
+                explanation: "肺炎は麻疹による死亡の最も一般的な原因であり、患者の1〜6%に発生します。"
+            },
+            {
+                id: 32,
+                category: "第4章：合併症と重症化リスク",
+                question: "麻疹患者のうち、脳炎を合併する頻度はどれくらいですか？",
+                options: ["10人に1人", "100人に1人", "1,000人に1人", "10,000人に1人"],
+                correctIndex: 2,
+                explanation: "麻疹に関連する脳炎は約1,000例に1例の割合で発生し、重篤な後遺症を残す可能性があります。"
+            },
+            {
+                id: 33,
+                category: "第4章：合併症と重症化リスク",
+                question: "麻疹から回復した後、数年から十数年後に発症する進行性の神経疾患を何と言いますか？",
+                options: ["ギラン・バレー症候群", "亜急性硬化性全脳炎（SSPE）", "多発性硬化症", "川崎病"],
+                correctIndex: 1,
+                explanation: "数万例に1例の割合で、回復後数年を経て致命的なSSPEを発症することがあります。"
+            },
+            {
+                id: 34,
+                category: "第4章：合併症と重症化リスク",
+                question: "妊婦が麻疹に感染した場合の最大のリスクは何ですか？",
+                options: ["母親の視力低下", "流産・早産、低出生体重児", "胎児の遺伝子変異", "妊娠期間の延長"],
+                correctIndex: 1,
+                explanation: "妊娠中の感染は流産や早産、母体死亡のリスクを高めます。"
+            },
+            {
+                id: 35,
+                category: "第4章：合併症と重症化リスク",
+                question: "麻疹による世界全体の死亡者のうち、大半を占めるのはどの年齢層ですか？",
+                options: ["5歳未満の子ども", "20代の若者", "妊婦", "80歳以上の高齢者"],
+                correctIndex: 0,
+                explanation: "世界的に、麻疹による死亡者のほとんどは5歳未満のワクチン未接種児です。"
+            },
+            {
+                id: 36,
+                category: "第4章：合併症と重症化リスク",
+                question: "2023年に世界全体で麻疹によって死亡したと推定される人数は約何人ですか？",
+                options: ["約1,000人", "約1万人", "約10.8万人", "約100万人"],
+                correctIndex: 2,
+                explanation: "WHOの報告によると、2023年には世界で推定10万7500人から10万8000人が麻疹で死亡しています。"
+            },
+            {
+                id: 37,
+                category: "第4章：合併症と重症化リスク",
+                question: "麻疹の合併症として、視力に影響を与えるものはどれですか？",
+                options: ["結膜充血のみ", "失明", "乱視", "飛蚊症"],
+                correctIndex: 1,
+                explanation: "重篤な合併症の一つとして失明が挙げられます。"
+            },
+            {
+                id: 38,
+                category: "第4章：合併症と重症化リスク",
+                question: "免疫不全のある方（がん治療中や免疫抑制剤使用中など）が麻疹に感染した場合のリスクはどうなりますか？",
+                options: ["健常者と変わらない", "感染しても発症しない", "重症化しやすく、致死的な経過をたどるリスクが高い", "ワクチンが効きすぎる"],
+                correctIndex: 2,
+                explanation: "免疫不全者は重症化のリスクが極めて高く、細心の注意が必要です。"
+            },
+            {
+                id: 39,
+                category: "第4章：合併症と重症化リスク",
+                question: "乳幼児において、肺炎に次いで頻度の高い合併症はどれですか？",
+                options: ["骨折", "中耳炎", "心筋梗塞", "虫垂炎"],
+                correctIndex: 1,
+                explanation: "中耳炎は患者の7〜9%に見られ、難聴の原因となることもあります。"
+            },
+            {
+                id: 40,
+                category: "第4章：合併症と重症化リスク",
+                question: "先進国における麻疹の致死率は、概ねどれくらいとされていますか？",
+                options: ["100人に1人", "1,000人に2〜3人（0.2〜0.3%）", "1万人に1人", "0%"],
+                correctIndex: 1,
+                explanation: "医療アクセスの良い国でも、報告された1,000例に対して2〜3人程度の割合で死亡します。"
+            },
+            // 第5章
+            {
+                id: 41,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "救急現場で「発熱・咳・鼻水・発疹」を呈する患者を疑った場合、最初に行うべきことは何ですか？",
+                options: ["すぐに体を密着させてバイタルを測る", "標準予防策に加え、空気感染に対する予防策（N95マスク等）を講じる", "まずは通常の風邪として対応する", "消防署に戻って消毒液を準備する"],
+                correctIndex: 1,
+                explanation: "麻疹は空気感染するため、疑いがある場合はN95マスクの着用など厳重な予防策が必要です。"
+            },
+            {
+                id: 42,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "麻疹が疑われる患者を搬送する際、受け入れ病院に対して行うべき適切な対応はどれですか？",
+                options: ["病院に到着してから口頭で伝える", "搬送前にあらかじめ「麻疹の疑い」を連絡し、病院の指示に従う", "感染を知られないように静かに搬送する", "患者の個人情報なので伏せておく"],
+                correctIndex: 1,
+                explanation: "病院内での二次感染を防ぐため、事前連絡と隔離室への直接収容などの準備が不可欠です。"
+            },
+            {
+                id: 43,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "救急車内の消毒について、麻疹ウイルスに対して有効な手段はどれですか？",
+                options: ["換気と、アルコールや次亜塩素酸ナトリウムを用いた清拭", "水をまくだけでよい", "芳香剤をまく", "何もしなくても2時間で消えるので放置する"],
+                correctIndex: 0,
+                explanation: "手についたウイルスの洗浄や接触部位の消毒は接触感染リスクを下げるために重要です。また、換気も空気感染対策として有効です。"
+            },
+            {
+                id: 44,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "麻疹の疑いがある患者を搬送した後の救急車は、どれくらいの期間、換気が必要ですか？",
+                options: ["1分間", "ウイルスの生存期間を考慮し、十分な換気を行う（約2時間が目安）", "3日間使用禁止にする", "窓を閉め切っておく"],
+                correctIndex: 1,
+                explanation: "ウイルスは空気中で最長2時間生存するため、十分な換気と清掃が推奨されます。"
+            },
+            {
+                id: 45,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "職員本人が麻疹に対する免疫を持っているか確認するために、最も確実な記録は何ですか？",
+                options: ["自分の記憶", "母子健康手帳", "親からの伝聞", "体力の自信"],
+                correctIndex: 1,
+                explanation: "2回のワクチン接種歴や罹患歴を母子健康手帳等の公的な記録で確認することが推奨されます。"
+            },
+            {
+                id: 46,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "不特定多数の市民と接する消防職員として推奨されるワクチン接種状況はどれですか？",
+                options: ["1回接種していれば十分", "2回の接種を完了している", "感染してから考える", "高齢になってから打つ"],
+                correctIndex: 1,
+                explanation: "海外からの持ち込みリスクや集団感染を防ぐため、2回の接種を完了しておくことが推奨されます。"
+            },
+            {
+                id: 47,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "麻疹患者と接触した可能性があるが、ワクチン未接種だった職員への「曝露後予防」として行われるのはどれですか？",
+                options: ["3日以内の緊急ワクチン接種（または6日以内の免疫グロブリン投与）", "大量の水を飲む", "激しい運動で汗をかく", "解熱剤を予防的に飲む"],
+                correctIndex: 0,
+                explanation: "感受性のある人が曝露した場合、3日以内のワクチン接種などで発症を予防できる可能性があります。"
+            },
+            {
+                id: 48,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "麻疹の感染経路の一つである「接触感染」を防ぐ基本動作は何ですか？",
+                options: ["手洗いと手指消毒", "ゴーグルの着用のみ", "防護服の常時着用", "息を止める"],
+                correctIndex: 0,
+                explanation: "手についたウイルスを洗い流すことで接触感染のリスクを下げることができます。"
+            },
+            {
+                id: 49,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "搬送した患者が「典型的な症状ではないが、実は麻疹だった」という事態（修飾麻疹）を想定して、どのような意識を持つべきですか？",
+                options: ["症状が軽ければ感染力はないと考える", "ワクチン接種済みの患者でも、疑わしい症状があれば感染源になり得ると注意する", "典型的な症状がない限り無視する", "救急隊員は感染しないと信じる"],
+                correctIndex: 1,
+                explanation: "免疫が不十分な人の「修飾麻疹」は、本人が気づかぬうちに周囲に広めるリスクがあるため注意が必要です。"
+            },
+            {
+                id: 50,
+                category: "第5章：消防・救急職員の現場対応",
+                question: "周囲の人々を麻疹から守るために、周りの人がワクチンを打って「免疫の繭」を作る戦略を何と言いますか？",
+                options: ["マスク戦略", "コクーン戦略", "隔離戦略", "ブロック戦略"],
+                correctIndex: 1,
+                explanation: "赤ちゃんや妊婦さんなど、ワクチンが打てない人を守るために周囲が免疫を持つことを「コクーン（繭）戦略」と呼びます。"
+            }
+        ];
+
+        // -----------------------------------------------------------------------------
+        // Helper: 配列をシャッフルして先頭n個を取得
+        // -----------------------------------------------------------------------------
+        const getRandomQuestions = (allQuestions, count) => {
+            const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        };
+
+        // -----------------------------------------------------------------------------
+        // Component: Main App
+        // -----------------------------------------------------------------------------
+        const App = () => {
+            const [currentQuestions, setCurrentQuestions] = useState([]);
+            const [userAnswers, setUserAnswers] = useState({});
+            const [isFinished, setIsFinished] = useState(false);
+            const [showIntro, setShowIntro] = useState(true);
+            const [score, setScore] = useState(0);
+
+            // 初期化：クイズを開始する
+            const startNewQuiz = () => {
+                const selected = getRandomQuestions(FULL_QUESTION_DATA, 10);
+                setCurrentQuestions(selected);
+                setUserAnswers({});
+                setIsFinished(false);
+                setScore(0);
+                setShowIntro(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            // 選択肢を選んだ時の処理
+            const handleOptionSelect = (questionId, optionIndex) => {
+                if (isFinished) return;
+                setUserAnswers(prev => ({
+                    ...prev,
+                    [questionId]: optionIndex
+                }));
+            };
+
+            // 採点する
+            const handleGrade = () => {
+                const answeredCount = Object.keys(userAnswers).length;
+                if (answeredCount < 10) {
+                    if (!window.confirm("未回答の問題がありますが、採点してよろしいですか？")) {
+                        return;
+                    }
+                }
+
+                let calculatedScore = 0;
+                currentQuestions.forEach(q => {
+                    if (userAnswers[q.id] === q.correctIndex) {
+                        calculatedScore += 10;
+                    }
+                });
+
+                setScore(calculatedScore);
+                setIsFinished(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            // イントロ画面
+            if (showIntro) {
+                return (
+                    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans text-slate-800">
+                        <div className="max-w-2xl w-full bg-white shadow-2xl rounded-lg overflow-hidden border-t-8 border-slate-800">
+                            <div className="bg-slate-900 p-10 text-center">
+                                <ShieldCheck className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                                <h1 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide">
+                                    消防職員向け e-Learning
+                                </h1>
+                                <h2 className="text-amber-500 text-lg font-medium tracking-wider uppercase">
+                                    麻疹（はしか）感染対策・知識確認
+                                </h2>
+                            </div>
+                            <div className="p-10 space-y-6">
+                                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <h3 className="text-xl font-bold text-slate-800 mb-3 flex items-center">
+                                        <BookOpen className="w-5 h-5 mr-2 text-amber-600" />
+                                        実施要項
+                                    </h3>
+                                    <ul className="list-disc list-inside text-slate-600 space-y-2 leading-relaxed">
+                                        <li>全50問のデータベースから、<span className="font-bold text-slate-900">ランダムに10問</span>が出題されます。</li>
+                                        <li>救急現場での感染防止や正しい医学知識の習得を目的としています。</li>
+                                        <li>合格ラインは設定されていませんが、満点を目指してください。</li>
+                                        <li>回答後に解説が表示されますので、復習に役立ててください。</li>
+                                    </ul>
+                                </div>
+                                
+                                <div className="text-center pt-4">
+                                    <button 
+                                        onClick={startNewQuiz}
+                                        className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-12 rounded-full shadow-lg transform transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-amber-500/50"
+                                    >
+                                        学習を開始する
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="bg-slate-100 p-4 text-center text-slate-500 text-sm">
+                                © Fire Department Training Division
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ---------------------------------------------------------------------------
+            // Main Render: Quiz & Result
+            // ---------------------------------------------------------------------------
+            return (
+                <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
+                    {/* Header */}
+                    <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+                        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+                            <div className="flex items-center space-x-3">
+                                <ShieldCheck className="w-8 h-8 text-amber-500" />
+                                <div>
+                                    <h1 className="font-serif font-bold text-lg md:text-xl tracking-wide">消防職員 e-Learning</h1>
+                                    <p className="text-xs text-slate-400">麻疹対策特別講座</p>
+                                </div>
+                            </div>
+                            {isFinished && (
+                                <div className="text-right">
+                                    <span className="block text-xs text-slate-400 uppercase tracking-wider">Score</span>
+                                    <span className={`text-2xl font-bold ${score === 100 ? 'text-amber-400' : 'text-white'}`}>
+                                        {score} <span className="text-sm font-normal">/ 100</span>
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </header>
+
+                    <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+                        
+                        {/* Result Summary Banner */}
+                        {isFinished && (
+                            <div className="bg-white rounded-lg shadow-xl overflow-hidden animate-fade-in-up border border-slate-200">
+                                <div className={`p-8 text-center ${score >= 80 ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                                    <Award className={`w-16 h-16 mx-auto mb-4 ${score >= 80 ? 'text-amber-500' : 'text-slate-400'}`} />
+                                    <h2 className="text-3xl font-serif font-bold text-slate-900 mb-2">
+                                        {score >= 80 ? 'Excellent!' : 'Training Completed'}
+                                    </h2>
+                                    <p className="text-slate-600 mb-6">
+                                        あなたのスコアは <span className="font-bold text-2xl text-slate-900">{score}点</span> です
+                                    </p>
+                                    <button 
+                                        onClick={startNewQuiz}
+                                        className="inline-flex items-center bg-slate-900 text-white px-8 py-3 rounded-full hover:bg-slate-800 transition shadow-md font-semibold"
+                                    >
+                                        <RefreshCw className="w-4 h-4 mr-2" />
+                                        新しい問題で再度挑戦する
+                                    </button>
+                                </div>
+                                <div className="bg-slate-100 p-4 text-center text-sm text-slate-500 border-t border-slate-200">
+                                    各問題の解説を確認し、知識を定着させてください。
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Questions List */}
+                        <div className="space-y-6">
+                            {currentQuestions.map((q, qIndex) => {
+                                const isSelected = (idx) => userAnswers[q.id] === idx;
+                                const isCorrect = userAnswers[q.id] === q.correctIndex;
+                                
+                                // Result styling classes
+                                let cardBorderClass = "border-t-4 border-slate-600";
+                                if (isFinished) {
+                                    cardBorderClass = isCorrect ? "border-t-4 border-emerald-500" : "border-t-4 border-rose-500";
+                                }
+
+                                return (
+                                    <div key={q.id} className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${cardBorderClass}`}>
+                                        {/* Question Header */}
+                                        <div className="p-6 md:p-8">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-sm">
+                                                    Question {qIndex + 1}
+                                                </span>
+                                                <span className="text-xs text-slate-400 font-medium">{q.category}</span>
+                                            </div>
+                                            
+                                            <h3 className="text-lg md:text-xl font-medium text-slate-900 leading-relaxed mb-6">
+                                                {q.question}
+                                            </h3>
+
+                                            {/* Options */}
+                                            <div className="space-y-3">
+                                                {q.options.map((option, idx) => {
+                                                    let optionClass = "border-slate-200 hover:bg-slate-50 hover:border-slate-300";
+                                                    let icon = <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>;
+
+                                                    // Logic for styling during quiz vs after grading
+                                                    if (isFinished) {
+                                                        if (idx === q.correctIndex) {
+                                                            // This is the correct answer
+                                                            optionClass = "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold";
+                                                            icon = <CheckCircle className="w-5 h-5 text-emerald-600" />;
+                                                        } else if (isSelected(idx) && idx !== q.correctIndex) {
+                                                            // User chose this, but it's wrong
+                                                            optionClass = "bg-rose-50 border-rose-300 text-rose-900";
+                                                            icon = <XCircle className="w-5 h-5 text-rose-500" />;
+                                                        } else {
+                                                            optionClass = "opacity-50 border-slate-100";
+                                                        }
+                                                    } else {
+                                                        // Interactive mode
+                                                        if (isSelected(idx)) {
+                                                            optionClass = "bg-amber-50 border-amber-500 ring-1 ring-amber-500 text-slate-900 font-semibold shadow-sm";
+                                                            icon = <div className="w-5 h-5 rounded-full border-[5px] border-amber-500 bg-white"></div>;
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => handleOptionSelect(q.id, idx)}
+                                                            disabled={isFinished}
+                                                            className={`w-full text-left p-4 rounded-md border transition-all flex items-start gap-4 ${optionClass}`}
+                                                        >
+                                                            <div className="flex-shrink-0 mt-0.5">{icon}</div>
+                                                            <span className="leading-snug">{option}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Explanation Section (Only shown after grading) */}
+                                            {isFinished && (
+                                                <div className="mt-8 pt-6 border-t border-slate-100 animate-fade-in">
+                                                    <div className="bg-slate-50 rounded-md p-5 border-l-4 border-slate-800">
+                                                        <div className="flex items-center gap-2 mb-2 text-slate-800 font-bold text-sm uppercase tracking-wide">
+                                                            <AlertCircle className="w-4 h-4" />
+                                                            解説
+                                                        </div>
+                                                        <p className="text-slate-700 leading-relaxed">
+                                                            {q.explanation}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Grade Button */}
+                        {!isFinished && (
+                            <div className="text-center pt-8">
+                                <button
+                                    onClick={handleGrade}
+                                    className="group relative inline-flex items-center justify-center px-10 py-4 text-lg font-bold text-white transition-all duration-200 bg-amber-600 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-600 shadow-lg hover:shadow-xl hover:-translate-y-0.5 w-full md:w-auto"
+                                >
+                                    <span className="mr-2">採点する</span>
+                                    <CheckCircle className="w-5 h-5 opacity-80 group-hover:opacity-100" />
+                                </button>
+                                <p className="mt-4 text-sm text-slate-500">
+                                    ※ 全ての質問に回答してから押してください
+                                </p>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Footer message */}
+                    <footer className="max-w-4xl mx-auto px-4 py-8 text-center">
+                         <p className="text-sm text-slate-500 font-serif italic">
+                            "N95マスクの適切な使用と、ご自身の2回接種を確実に済ませることが、あなた自身と家族、そして市民を守る最大の盾になります。"
+                         </p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
