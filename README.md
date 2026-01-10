@@ -112,7 +112,7 @@ e-Learning№２
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 5</div>
-      <div class="lesson-desc">機械器具の取扱い</div>
+      <div class="lesson-desc">車両管理アプリ</div>
       <a href="lesson5/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
