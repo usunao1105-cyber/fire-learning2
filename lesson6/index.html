@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太陽光発電設備 火災活動教養 e-Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F172A; /* Midnight Blue: 消防の規律 */
+            --accent-color: #C5A059; /* Champagne Gold: 高級感・誇り */
+            --text-color: #333333;
+            --bg-color: #F8F9FA;
+            --correct-color: #15803d;
+            --wrong-color: #b91c1c;
+        }
+
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--bg-color);
+            margin: 40px 20px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border-top: 6px solid var(--accent-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .question-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .question-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 15px;
+        }
+
+        .q-number {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .q-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .option-item {
+            margin-bottom: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-label:hover {
+            background-color: #f1f5f9;
+            border-color: var(--accent-color);
+        }
+
+        input[type="radio"] {
+            margin-right: 15px;
+            accent-color: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        /* Result Styles */
+        .feedback-area {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-left: 4px solid #ccc;
+            display: none; /* Hidden by default */
+        }
+
+        .feedback-area.correct {
+            border-left-color: var(--correct-color);
+            background-color: #f0fdf4;
+        }
+
+        .feedback-area.wrong {
+            border-left-color: var(--wrong-color);
+            background-color: #fef2f2;
+        }
+
+        .result-status {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .result-status.correct { color: var(--correct-color); }
+        .result-status.wrong { color: var(--wrong-color); }
+
+        .rationale {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #475569;
+        }
+
+        .rationale strong {
+            color: var(--primary-color);
+        }
+
+        /* Controls */
+        .controls {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--accent-color);
+            border: 1px solid var(--primary-color);
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #1e293b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        button.secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            margin-left: 10px;
+        }
+
+        button.secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        #score-display {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid var(--accent-color);
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                padding: 20px;
+                width: 100%;
+                border-radius: 0;
+            }
+            h1 { font-size: 1.5rem; }
+            button { width: 100%; margin-bottom: 10px; margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>太陽光発電設備 活動教養</h1>
+        <div class="subtitle">Fire Service e-Learning System</div>
+    </header>
+
+    <div id="score-display"></div>
+    <div id="quiz-container">
+        <!-- Questions will be injected here via JavaScript -->
+    </div>
+
+    <div class="controls">
+        <button id="grade-btn" onclick="gradeQuiz()">採点する</button>
+        <button id="retry-btn" onclick="initQuiz()" style="display:none;" class="secondary">再度挑戦する</button>
+    </div>
+</div>
+
+<script>
+    // Data Source: 50 Questions
+    const allQuestions = [
+        { q: "太陽光パネルの電気的な特性として、消防活動上最も注意すべき点は何ですか。", a: ["スイッチを切ればすぐに電圧がゼロになる", "夜間は月明かりでも最大出力で発電する", "光が当たる限り物理的に発電を停止させることが困難である", "水に濡れると自動的に回路が遮断される"], correct: 2, reason: "太陽光パネルは、太陽光だけでなく火災時の炎や照明車の光でも発電を続けるため、常に「活電状態」にあることを前提に活動する必要があります。" },
+        { q: "太陽光パネルが設置された建物での放水時、推奨される標準的な離隔距離はどれですか。", a: ["1メートル以上", "3メートル以上", "6メートル以上", "10メートル以上"], correct: 2, reason: "総務省消防庁のガイドラインにおいて、水を伝った感電を防ぐために6メートル以上の十分な距離を保つことが指導されています。" },
+        { q: "放水による感電リスクを低減するために、推奨される注水方法はどれですか。", a: ["棒状注水", "噴霧注水（霧状の放水）", "高圧集中注水", "大量注水"], correct: 1, reason: "噴霧状の水滴は空気が介在するため電気抵抗が増大し、棒状注水に比べて導電性が飛躍的に低くなるためです。" },
+        { q: "パワーコンディショナ（PCS）などの機器本体に設けられる警告表示の文字サイズは、原則として何ポイント以上が推奨されますか。", a: ["10ポイント", "18ポイント", "24ポイント", "48ポイント"], correct: 2, reason: "消防隊員が現場で即座に視認できるよう、ゴシック体24ポイント以上の文字を使用することが指導基準となっています。" },
+        { q: "消防隊員の進入や活動のために、パネルや配線を設置しないことが推奨される範囲は、非常用進入口等の周囲何cm以内ですか。", a: ["10cm以内", "30cm以内", "50cm以内", "100cm以内"], correct: 2, reason: "非常用進入口や屋外階段の周囲概ね50cm以内には、パネルや配線を設置しないことが指導基準として定められています。" },
+        { q: "接続箱やパワーコンディショナのカバーを開ける際、多くの場合に使用可能なキーの種類はどれですか。", a: ["マスターキー", "タキゲン製造のNo.200キー", "四角形の特殊レンチ", "六角レンチ"], correct: 1, reason: "多くの接続箱や分電盤は、共通規格であるタキゲンNo.200キーで開錠できるようになっています。" },
+        { q: "直流（DC）電流が交流（AC）電流と比較して、火災時にアーク放電が危険とされる理由はどれですか。", a: ["電圧が常に一定だから", "一度発生すると自己消弧（自然に消えること）しにくいから", "漏電遮断器が必ず作動するから", "配線が太いため燃えやすいから"], correct: 1, reason: "直流電流は交流と異なり、一度アーク放電が発生すると継続しやすく、周囲の樹脂材料を炭化させて出火に至るリスクが高い特性があります。" },
+        { q: "鎮圧後、パネルの発電を物理的に停止させるために有効な資機材はどれですか。", a: ["大量の中和剤", "鉄製のカバー", "厚手の防炎性能を持つ遮光シート", "大型扇風機"], correct: 2, reason: "損傷したパネルを厚手の防炎遮光シート（ブルーシート等）で覆い、光を遮断することで物理的に発電を停止させ、再燃や感電を防ぎます。" },
+        { q: "太陽光パネルの表面に使用されている「強化ガラス」について、火災時の注意点はどれですか。", a: ["高温でも強度が全く変わらない", "常に20cm以上の大きな破片で割れる", "極めて高い熱を受けると普通のガラス状態に戻り、鋭利な破片になることがある", "水をかけると瞬時に蒸発する"], correct: 2, reason: "強化ガラスであっても火災の高熱にさらされると強度が低下し、通常のガラスのように大きく鋭利な破片となって落下する危険があります。" },
+        { q: "消防活動で使用する個人用保護具（PPE）について、正しい記述はどれですか。", a: ["通常の防火手袋には十分な電気絶縁性能がある", "高電圧用の絶縁ゴム手袋や絶縁長靴を着用すべきである", "濡れた手袋でも絶縁性能は変わらない", "防塵マスクだけで感電は防げる"], correct: 1, reason: "通常の防火装備には電気絶縁性能がないため、太陽光発電設備がある現場では絶縁性能を持つ装備の追加着用が強く推奨されます。" },
+        { q: "直流電力を家庭等で使用可能な交流電力に変換する装置の名称はどれですか。", a: ["接続箱", "遮断器", "パワーコンディショナ（PCS）", "分電盤"], correct: 2, reason: "パワーコンディショナは、パネルで発電された直流電力を交流電力に変換し、出力品質を制御する役割を持ちます。" },
+        { q: "複数の太陽光パネルからの配線を一つにまとめ、パワーコンディショナへ送るための機器はどれですか。", a: ["接続箱", "蓄電池", "変圧器", "送電盤"], correct: 0, reason: "接続箱は、複数のＰＶモジュールの直流電力を集約するための機器です。" },
+        { q: "住宅の野地板まで延焼した事例が報告されている、特定の設置形態はどれですか。", a: ["屋根置き型", "鋼板等なし型（屋根材一体型の一部）", "地上設置型", "壁設置型"], correct: 1, reason: "消費者安全調査委員会の報告書において、「鋼板等なし型」以外のモジュールで野地板に延焼した事例はないとされています。" },
+        { q: "太陽光パネルの一部に影ができたり汚れが付着したりすることで、その部分が異常発熱する現象を何と呼びますか。", a: ["逆電流現象", "ホットスポット現象", "アーク放電現象", "絶縁破壊現象"], correct: 1, reason: "パネルの一部に影ができると、その部分が抵抗となり200度以上の異常発熱を起こす「ホットスポット」が発生し、発火のリスクとなります。" },
+        { q: "2024年に発生した仙台市のメガソーラー火災で、鎮火までに約22時間を要した主な要因はどれですか。", a: ["消防車が不足していたため", "日中は感電の恐れからすぐに放水活動を行えなかったため", "付近に水利が全くなかったため", "パネルが次々と爆発したため"], correct: 1, reason: "日中はパネルが発電を続け感電リスクが高いため、日没後に放水を開始せざるを得なかったことが鎮火遅延の要因です。" },
+        { q: "メガソーラー等の火災で延焼拡大を招きやすい、PCS周辺の管理不備はどれですか。", a: ["枯草やゴミの堆積", "砂利の敷き過ぎ", "防草シートの敷設", "警備員の不在"], correct: 0, reason: "仙台の事例等では、故障した機器から飛散した火種が周辺の乾燥した下草に引火し、広範囲に延焼しました。" },
+        { q: "鹿児島県伊佐市の事案で、消防職員が負傷する爆発事故の原因となった設備はどれですか。", a: ["太陽光パネル架台", "リチウムイオン蓄電池設備", "屋外の受電トランス", "PCSの冷却ファン"], correct: 1, reason: "併設されたリチウムイオン蓄電池設備から可燃性ガスが噴出し、建屋内で爆発が発生したことで隊員が負傷しました。" },
+        { q: "リチウムイオン蓄電池火災において、消防隊員が進入する際の安全管理として正しいものはどれですか。", a: ["一人で迅速に進入する", "複数の隊員で進入し、空気呼吸器を確実に着装して命綱を使用する", "煙が出ていなければ呼吸器は不要である", "防塵マスクのみで対応する"], correct: 1, reason: "有毒ガスの発生や爆発のリスクがあるため、複数人での活動、呼吸保護具の着用、命綱の使用が徹底されています。" },
+        { q: "建物全体の電力を遮断した後も、依然として電圧が残っている可能性が高い区間はどこですか。", a: ["家庭内の全てのコンセント", "パワーコンディショナから分電盤の間", "パネルからパワーコンディショナ（PCS）までの直流配線", "近くの電柱のトランス"], correct: 2, reason: "系統電力を遮断しても、パネルが光を受けている限り、パネルからPCSまでの直流側は活電状態（活線）です。" },
+        { q: "現場到着時の情報収集において、指揮者が優先的に確認すべき事項はどれですか。", a: ["パネルのメーカー名", "システムの設置有無、電圧、および感電危険区域の設定", "過去の総発電量", "余剰電力の売電単価"], correct: 1, reason: "安全な活動を確保するため、設備の存在と電圧を把握し、関係者以外を制限する区域設定が不可欠です。" },
+        { q: "消防活動用通路の幅員は、原則としてどの程度確保すべきとされていますか。", a: ["0.5メートル以上", "1メートル以上", "2メートル以上", "5メートル以上"], correct: 1, reason: "放水や資器材搬送を円滑に行うため、幅員概ね1m以上の通路の確保が推奨されています。" },
+        { q: "設置面積が概ね300㎡以上の大規模屋根において、全てのパネルに水が届くように考慮された距離基準はどれですか。", a: ["10メートル以内", "15メートル以内", "20メートル以内", "24メートル以内"], correct: 3, reason: "ガンタイプノズルの最大水平放水射程距離（約24m）を考慮し、通路からの距離を24m以内とするよう指導されています。" },
+        { q: "鎮火後の残火確認時に、感電事故が発生しやすい状況として最も多いのはどれですか。", a: ["消防車を運転している時", "倒壊したパネルや配線を不用意に持ち上げたり移動させたりする時", "遠くから双眼鏡で観察している時", "住民に避難を呼びかけている時"], correct: 1, reason: "過去の感電事故例の多くは、鎮火後の残火確認中にパネルや配線に直接触れた際に発生しています。" },
+        { q: "夜間の火災対応後、翌朝の再燃を防ぐために講ずべき措置はどれですか。", a: ["パネルを細かく破壊する", "日が照る前にパネルを遮光シートで覆う", "建物全体を密閉して酸素を遮断する", "朝まで放水を続ける"], correct: 1, reason: "日が昇ると再び発電が始まり、損傷部からアーク放電が発生して再燃する恐れがあるためです。" },
+        { q: "損傷・廃棄される太陽光パネルは、廃棄物処理法において原則としてどの区分に該当しますか。", a: ["一般廃棄物（家庭ゴミ）", "産業廃棄物", "特別管理産業廃棄物", "資源ゴミ（古紙等と同様）"], correct: 1, reason: "太陽光パネルは事業用・家庭用を問わず、廃棄の際は「産業廃棄物」として適切に処理する必要があります。" },
+        { q: "太陽光パネルに含まれる可能性がある有害物質（重金属等）の組み合わせとして正しいものはどれですか。", a: ["鉛、カドミウム、セレン", "鉄、アルミニウム、マグネシウム", "酸素、窒素、アルゴン", "食塩、石灰、重曹"], correct: 0, reason: "製品の種類によりますが、パネルには鉛、カドミウム、セレンなどの有害物質が含まれていることがあり、環境流出への注意が必要です。" },
+        { q: "浸水・水没した太陽光発電設備について、水が引いた後の扱いで正しいものはどれですか。", a: ["水が引けばすぐに触っても安全である", "内部の湿気や汚損により、時間が経過してから発火する恐れがある", "水没したパネルは二度と発電しない", "水道水で丸洗いすればすぐに再使用できる"], correct: 1, reason: "浸水した機器は内部に湿気や汚損が残り、絶縁が劣化して後から発火する「電気火災」のリスクがあります。" },
+        { q: "危険物施設（給油取扱所等）の屋根にパネルを設置する場合、地震対策として義務付けられていることはどれですか。", a: ["パネルをビニールテープで固定する", "屋根の重量増を考慮した構造計算の実施と強度の確保", "パネルを青色以外に塗装する", "地震時はパネルを即座に取り外す"], correct: 1, reason: "危険物施設では脱落・倒壊による二次災害を防ぐため、地震力や風圧に対する構造計算が厳格に求められます。" },
+        { q: "危険物施設の太陽光発電設備において、停電時（災害時）の備えとして推奨されている機能はどれですか。", a: ["全ての電力を売電し続ける機能", "照明等の非常用電源として供給・切り替えできる機能", "パネルを自動で隠すカーテン機能", "蓄電池を全て放電させる機能"], correct: 1, reason: "災害時でも施設の安全確保に必要な照明等の電力を自立的に確保できるよう、切り替え機能の備えが推奨されています。" },
+        { q: "感電防止のための表示に使用する文字と地色の色の組み合わせとして、適切なものはどれですか。", a: ["黄色地に白文字", "青地に黒文字", "白地に黒文字又は赤文字", "緑地に白文字"], correct: 2, reason: "視認性を確保するため、白地に黒文字や赤文字など、容易に読み取れる組み合わせが基準となっています。" },
+        { q: "太陽電池パネルの「セル」とは何ですか。", a: ["パネルを固定する枠のこと", "太陽電池の基本単位（素子）のこと", "複数のパネルをまとめた箱のこと", "直流を交流に変える装置のこと"], correct: 1, reason: "セルは太陽電池の基本単位であり、それを複数枚組み合わせたものがモジュール（パネル）です。" },
+        { q: "屋外に設置されたパネルからPCSへの配線が、どのようになされているかを確認するための目印はどれですか。", a: ["水道メーター", "外壁を伝う配管（直流配線）", "ガスボンベの配置", "郵便受けの色"], correct: 1, reason: "パネルと接続箱等をつなぐ直流配線は、多くの場合、建物の外壁を伝って配管内に敷設されています。" },
+        { q: "太陽光発電システムと外見が類似しており、感電リスクはないが熱水による火傷に注意が必要なものはどれですか。", a: ["風力発電", "太陽熱利用システム（太陽熱温水器等）", "水力発電", "バイオマス発電"], correct: 1, reason: "太陽熱利用システムは見た目がパネルに似ていますが、水や空気を通すシステムであり、電気的な感電リスクはありません。" },
+        { q: "絶縁用保護具（ゴム手袋・長靴）を使用する際、最も留意すべき点はどれですか。", a: ["泥で汚れていても構わない", "可能な限り乾燥した状態を保つこと", "常に水で濡らして冷却すること", "破れていても厚手なら使用できる"], correct: 1, reason: "絶縁性能がある装備でも、水に濡れると絶縁性能が著しく低下するため、乾燥状態を保つことが重要です。" },
+        { q: "太陽電池モジュールを廃棄する際、所有者が最初に行うべき適切な行動はどれですか。", a: ["一般の粗大ゴミとして出す", "自分で屋根から取り外す", "住宅メーカーや販売施工店に相談する", "近くの空き地に置いておく"], correct: 2, reason: "安全かつ適正な廃棄・リサイクルのため、まずは専門知識を持つ住宅メーカーや施工店に相談することが指導されています。" },
+        { q: "廃棄物処理業者に対し、パネルの有害物質情報を伝えるために活用が推奨されている書類はどれですか。", a: ["領収書", "廃棄物データシート（WDS）", "電気料金の明細", "パネルのカタログ"], correct: 1, reason: "適正な処理を行うために、メーカーや型式等の情報をWDSを用いて伝達することが推奨されています。" },
+        { q: "環境省の予測で、太陽光パネルの排出量がピーク（年間50万〜80万トン）に達するのはいつ頃ですか。", a: ["2025年", "2030年代後半", "2050年", "2100年"], correct: 1, reason: "固定価格買取制度（FIT）で普及した設備の寿命を考慮すると、2030年代後半に大量廃棄のピークを迎えると予測されています。" },
+        { q: "太陽電池パネルを一時的に保管・放置する場合、発電を抑えるための正しい置き方はどれですか。", a: ["空に向けて水平に置く", "受光面を下にするか、遮光シートで覆う", "鏡の前に置く", "水をかけ続ける"], correct: 1, reason: "取り外した後も光が当たれば発電するため、受光面を遮光する措置が不可欠です。" },
+        { q: "火災現場で「感電危険区域」を設定する際、指揮者が考慮すべき範囲はどこですか。", a: ["建物から100m離れた場所", "パネル設置屋根の直下や配線が集中している場所", "消防署の周辺", "近くの避難所"], correct: 1, reason: "指揮者は設備の位置や電圧を確認し、感電のリスクがある区域を特定して制限する必要があります。" },
+        { q: "目視で発見できないパネルの異常発熱（ホットスポット）を検知するのに有効な診断手法はどれですか。", a: ["打診検査", "赤外線サーモグラフィ試験", "匂いによる確認", "聴診器による異音確認"], correct: 1, reason: "サーモグラフィを使用することで、異常な熱を帯びているセルを非接触で早期に発見することが可能です。" },
+        { q: "太陽光発電の保守点検において、火災リスクの指標となる最も重要な電気的測定項目はどれですか。", a: ["絶縁抵抗測定", "音圧測定", "パネルの反射率測定", "表面のpH測定"], correct: 0, reason: "漏電（地絡）は火災の主な原因であり、定期的な絶縁抵抗測定によって電路の健全性を確認することが不可欠です。" },
+        { q: "パネルを構成する樹脂材料が燃焼した際に発生する恐れがある有害ガスはどれですか。", a: ["シアン化水素、塩化水素等", "酸素、水蒸気", "ヘリウム、ネオン", "二酸化炭素のみ"], correct: 0, reason: "パネルの樹脂部材が燃えると有害な燃焼ガスが発生する可能性があるため、空気呼吸器の着用が強く求められます。" },
+        { q: "消費者庁が報告している火災原因のうち、「製品不良」に分類されることが多いのはどれですか。", a: ["ケーブルの挟み込み", "モジュール内部のバイパスダイオード故障等", "下草の管理不備", "屋根の塗り替え"], correct: 1, reason: "火災原因は「モジュール起因（製品不良）」と「ケーブル起因（施工不良）」に大別されます。" },
+        { q: "施工不良が原因で火災に至る具体例として、最も多いものはどれですか。", a: ["パネルを裏表逆に設置した", "ケーブルの挟み込みや接続部の締め付け不足", "パネルに油を塗った", "架台に木材を使用した"], correct: 1, reason: "施工時の挟み込みや不適切な中間接続などは、長期間の振動や熱で絶縁破壊を起こし、出火の原因となります。" },
+        { q: "太陽光パネル火災において、「感電そのもの」よりも深刻な事故につながりやすい二次被害はどれですか。", a: ["視力の低下", "驚きやショックによる屋根からの滑落・転落", "服が汚れること", "発電効率の向上"], correct: 1, reason: "微量な感電であっても、その電撃に驚いてバランスを崩し、高所から転落することが最も危険なリスクとされています。" },
+        { q: "建物の入口等に設置される警告表示において、基本用語として必ず含むべき文字はどれですか。", a: ["「太陽光発電」または「ＰＶ」", "「エコ住宅」", "「高電圧注意」のみ", "「パネルあり」"], correct: 0, reason: "消防隊員が進入経路上でシステムを即座に認識できるよう、「太陽光発電」や「ＰＶ」といった基本用語を含む表示が義務付けられています。" },
+        { q: "太陽光パネルの裏面のシートや樹脂材料は、どのような性質のものを使用すべきとされていますか。", a: ["非常に燃えやすいもの", "自己消火性のある材料", "常に水を含んでいるもの", "完全に透明なもの"], correct: 1, reason: "パネルの構成材料には、火源がなくなれば自ら火が消える「自己消火性」を持つものが一般的に使用されています。" },
+        { q: "消防活動用通路にケーブルラック等を設置する場合の安全対策として正しいものはどれですか。", a: ["そのまま放置する", "蓋やブリッジを設置して安全に歩行可能にする", "通路自体を閉鎖する", "ケーブルを地面に埋める"], correct: 1, reason: "消防隊員の移動を妨げないよう、通路上の障害物には安全に歩行できるような措置が必要です。" },
+        { q: "住宅用太陽光発電システムの場合、何年に一度の専門業者点検が推奨されていますか。", a: ["10年に一度", "4年に一度", "半年に一度", "点検は不要"], correct: 1, reason: "経済産業省やガイドラインにおいて、住宅用は4年に1度以上の定期点検が推奨されています。" },
+        { q: "消防庁がSNSのデマを否定して明示した、太陽光パネル火災への基本方針はどれですか。", a: ["感電が危険なので燃え尽きるまで放置する", "留意点を踏まえた上で、通常通り放水消火を実施する", "ヘリコプターのみで消火する", "全てのパネルを斧で割ってから放水する"], correct: 1, reason: "消防庁は「太陽光パネルがあるから消火活動ができない、困難であるということはない」と公式に明言し、正しい知識に基づく活動を推奨しています。" }
+    ];
+
+    let currentQuestions = [];
+    let isGraded = false;
+
+    // Helper: Shuffle Array
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Initialize Quiz
+    function initQuiz() {
+        const shuffled = shuffleArray([...allQuestions]);
+        currentQuestions = shuffled.slice(0, 10);
+        isGraded = false;
+        
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+        document.getElementById('score-display').style.display = 'none';
+        document.getElementById('grade-btn').style.display = 'inline-block';
+        document.getElementById('retry-btn').style.display = 'none';
+
+        currentQuestions.forEach((qObj, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-card';
+            
+            // Build Options
+            let optionsHtml = '';
+            qObj.a.forEach((option, i) => {
+                optionsHtml += `
+                    <li class="option-item">
+                        <label class="option-label">
+                            <input type="radio" name="q${index}" value="${i}">
+                            <span>${option}</span>
+                        </label>
+                    </li>
+                `;
+            });
+
+            qDiv.innerHTML = `
+                <div class="question-header">
+                    <span class="q-number">Q${index + 1}.</span>
+                    <span class="q-text">${qObj.q}</span>
+                </div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+                <div class="feedback-area" id="feedback-${index}">
+                    <span class="result-status" id="status-${index}"></span>
+                    <div class="rationale">
+                        <strong>【根拠】</strong><br>${qObj.reason}
+                    </div>
+                </div>
+            `;
+            container.appendChild(qDiv);
+        });
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Grade Quiz
+    function gradeQuiz() {
+        if (isGraded) return;
+
+        let score = 0;
+        let allAnswered = true;
+
+        currentQuestions.forEach((qObj, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            const feedbackDiv = document.getElementById(`feedback-${index}`);
+            const statusSpan = document.getElementById(`status-${index}`);
+            const options = document.getElementsByName(`q${index}`);
+
+            // Disable inputs
+            options.forEach(opt => opt.disabled = true);
+            feedbackDiv.style.display = 'block';
+
+            if (selected) {
+                const userVal = parseInt(selected.value);
+                if (userVal === qObj.correct) {
+                    score++;
+                    feedbackDiv.className = 'feedback-area correct';
+                    statusSpan.textContent = '正解';
+                    statusSpan.className = 'result-status correct';
+                } else {
+                    feedbackDiv.className = 'feedback-area wrong';
+                    statusSpan.textContent = `不正解（正解：${qObj.a[qObj.correct]}）`;
+                    statusSpan.className = 'result-status wrong';
+                }
+            } else {
+                feedbackDiv.className = 'feedback-area wrong';
+                statusSpan.textContent = `未回答（正解：${qObj.a[qObj.correct]}）`;
+                statusSpan.className = 'result-status wrong';
+            }
+        });
+
+        const scoreDisplay = document.getElementById('score-display');
+        scoreDisplay.textContent = `あなたの得点： ${score} / 10 点`;
+        scoreDisplay.style.display = 'block';
+
+        document.getElementById('grade-btn').style.display = 'none';
+        document.getElementById('retry-btn').style.display = 'inline-block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        isGraded = true;
+    }
+
+    // Start on load
+    window.onload = initQuiz;
+
+</script>
+
+</body>
+</html>
