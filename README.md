@@ -122,7 +122,7 @@ e-Learning№２
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 7</div>
-      <div class="lesson-desc">伐木作業（チェーンソー）特別教育</div>
+      <div class="lesson-desc">PA消防隊救命メモ</div>
       <a href="lesson7/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
