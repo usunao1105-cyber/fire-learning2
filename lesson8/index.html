@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冬の気象・防災学習アプリ</title>
+    <!-- Tailwind CSS (スタイリング用フレームワーク) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons (アイコンライブラリ) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts (Noto Sans JP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f0f9ff;
+            color: #334155;
+        }
+
+        /* カードを裏返すアニメーション設定 */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
+        .card-inner {
+            transition: transform 0.6s;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* 背景の雪模様 */
+        .snow-bg {
+            /* 修正: opacityプロパティを削除し、色の指定自体で薄さを表現します */
+            /* これにより、文字やコンテンツまで薄くなるのを防ぎます */
+            background-image: radial-gradient(rgba(56, 189, 248, 0.3) 1px, transparent 1px), radial-gradient(rgba(56, 189, 248, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* 重要項目の強調発光エフェクト */
+        .danger-glow {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+    
+    <!-- ヘッダー -->
+    <header class="bg-gradient-to-r from-sky-600 to-blue-700 text-white shadow-lg z-10 sticky top-0">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-snowflake text-3xl animate-pulse"></i>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold">冬の気象・防災マスター</h1>
+                    <p class="text-xs md:text-sm text-sky-100 opacity-90">気象メカニズムから雪害対策まで</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center bg-white/10 rounded-lg p-1">
+                <button onclick="setMode('card')" id="btn-mode-card" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-blue-700 shadow-sm">
+                    <i class="ph ph-cards mr-1"></i>学習カード
+                </button>
+                <button onclick="setMode('list')" id="btn-mode-list" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-white hover:bg-white/10">
+                    <i class="ph ph-list-dashes mr-1"></i>リスト
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow container max-w-6xl mx-auto px-4 py-6 z-10 flex flex-col md:flex-row gap-6">
+        
+        <!-- サイドバー / フィルタ -->
+        <aside class="w-full md:w-64 flex-shrink-0 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-24">
+                <h2 class="font-bold text-slate-700 mb-3 flex items-center">
+                    <i class="ph ph-faders mr-2"></i>カテゴリ
+                </h2>
+                
+                <div class="space-y-2" id="category-container">
+                    <!-- カテゴリボタンはJSで生成されます -->
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-100">
+                    <div class="relative">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="search-input" placeholder="キーワード検索..." 
+                            class="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- コンテンツエリア -->
+        <div class="flex-grow">
+            <!-- 進捗 / ステータス -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="current-category-title" class="text-lg font-bold text-slate-800">すべての項目</h2>
+                <span id="item-count" class="text-sm bg-slate-200 text-slate-600 px-3 py-1 rounded-full font-medium">50項目</span>
+            </div>
+
+            <!-- 防災・安全上の重要項目バナー -->
+            <div id="safety-banner" class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+                <div class="flex items-start">
+                    <i class="ph-fill ph-warning-octagon text-red-500 text-2xl mr-3 mt-0.5"></i>
+                    <div>
+                        <h3 class="text-red-800 font-bold text-sm md:text-base">防災・安全上の重要項目</h3>
+                        <p class="text-red-700 text-sm mt-1">
+                            これらは人命に関わる雪害、火災リスク、救助活動に関連する知識です。確実に理解しておきましょう。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- グリッドコンテナ -->
+            <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                <!-- カード/リストはJSで生成されます -->
+            </div>
+            
+            <!-- 該当なし時の表示 -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-12 text-slate-400">
+                <i class="ph ph-smiley-sad text-6xl mb-4"></i>
+                <p>該当する項目が見つかりませんでした</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-6 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2024 冬の気象・防災学習アプリ</p>
+            <p class="text-xs mt-2 text-slate-500">出典に基づいたFAQにより構成されています。実際の活動時は最新の気象情報と自治体の指示に従ってください。</p>
+        </div>
+    </footer>
+
+    <!-- アプリケーションロジック -->
+    <script>
+        // FAQデータ
+        const faqData = [
+            // --- 基本メカニズム ---
+            { id: 1, q: "「西高東低」の気圧配置とは何ですか？", a: "日本の西側にシベリア高気圧、東側にアリューシャン低気圧が配置される、冬に典型的な気圧配置のことです。", category: "basic" },
+            { id: 2, q: "シベリア高気圧はどのように形成されますか？", a: "冬季、ユーラシア大陸上で激しい放射冷却が起こり、冷えて重くなった空気が地表付近に溜まって下降気流が生じることで形成されます。", category: "basic" },
+            { id: 3, q: "アリューシャン低気圧とは何ですか？", a: "冬季に北太平洋のアリューシャン列島付近で発達する停滞性の低気圧で、寒気を日本付近へ引き込むポンプのような役割を果たします。", category: "basic" },
+            { id: 4, q: "なぜ日本海側では雪が多く降るのですか？", a: "冷たく乾いたシベリアからの季節風が、比較的温暖な日本海を渡る際に大量の熱と水蒸気を補給し、雪雲が発達するためです。", category: "basic" },
+            { id: 5, q: "なぜ太平洋側は冬に乾燥するのですか？", a: "日本海側で雪を降らせた季節風が、脊梁山脈を越える際に水分を失い、乾燥した風となって吹き下りるためです。", category: "basic" },
+            { id: 6, q: "「気団の変質」とはどのような現象ですか？", a: "シベリアからの冷涼・乾燥な気団が、暖かい日本海面からの加熱と加湿を受けて、不安定な雪雲へと性質を変えるプロセスです。", category: "basic" },
+            { id: 7, q: "脊梁山脈は天気にどう影響しますか？", a: "雪雲を遮って日本海側に豪雪をもたらす一方、太平洋側に断熱昇温した乾いた空気を送り込み、冬晴れをもたらします。", category: "basic" },
+            { id: 8, q: "冬の季節風（モンスーン）の特徴は？", a: "北西方向から吹き付け、等圧線の間隔が狭いほど風が強まり、厳しい冷え込みを運びます。", category: "basic" },
+            { id: 9, q: "「ポーラーロウ（Polar Low）」とは何ですか？", a: "冬季の海洋上で急速に発達する、台風よりずっと小さい微小な低気圧で、強風や大雪を伴います。", category: "basic", important: true },
+            { id: 10, q: "「寒波」の定義は何ですか？", a: "広い地域に2〜3日、あるいはそれ以上にわたって顕著な気温低下をもたらすような寒気の到来を指します。", category: "basic" },
+
+            // --- 雪の種類と気圧配置 ---
+            { id: 11, q: "「山雪型」とはどのような降り方ですか？", a: "主に山沿いや山岳地帯で降雪量が多くなるパターンで、冬型の気圧配置が強く、季節風が強い時に起こります。", category: "types" },
+            { id: 12, q: "「里雪型」とはどのような降り方ですか？", a: "海岸部や平野部を中心に大雪となるパターンで、冬型が緩み、上空に強い寒気が流れ込んだ時に発生しやすくなります。", category: "types", important: true },
+            { id: 13, q: "「里雪型」の天気図の特徴は？", a: "日本海側で等圧線が「く」の字型や袋状に湾曲しており、風が比較的弱いのが特徴です。", category: "types" },
+            { id: 14, q: "「筋状の雲」とは何ですか？", a: "寒気が吹き出す際に海上で発生する雲の列で、風向に沿って平行に並ぶ特徴的な形をしています。", category: "types" },
+            { id: 15, q: "筋状雲の「Lモード」とは？", a: "風向に平行な雲列で、一般に強い地上風が吹いている領域に見られます。", category: "types" },
+            { id: 16, q: "筋状雲の「Tモード」とは？", a: "風向に直交するような走向を持つ雲列で、大雪の際によく現れます。", category: "types" },
+            { id: 17, q: "「離岸距離」から何がわかりますか？", a: "大陸の海岸線から雲が発生するまでの距離で、これが短いほど寒気が強く、海面との温度差が激しいことを示します。", category: "types" },
+            { id: 18, q: "「オープンセル」とはどんな雲ですか？", a: "中心が晴れて周辺に雲があるドーナツ状の雲で、強い寒気が流入している領域で卓越します。", category: "types" },
+            { id: 19, q: "「クローズドセル」とはどんな雲ですか？", a: "中心に雲があり周辺が晴れている雲で、比較的寒気が弱い領域で見られます。", category: "types" },
+            { id: 20, q: "「ベナール型対流」とは何ですか？", a: "暖かい面と冷たい面の間の流体が上昇・下降を繰り返す対流で、日本海の筋状雲の成因となる物理現象です。", category: "types" },
+
+            // --- JPCZ ---
+            { id: 21, q: "JPCZとは何の略ですか？", a: "Japan sea Polar air mass Convergence Zone（日本海寒帯気団収束帯）の略です。", category: "jpcz" },
+            { id: 22, q: "JPCZはどのように発生しますか？", a: "シベリアからの気流が朝鮮半島の長白山脈で二分され、その風下の日本海上で再合流（収束）して強い上昇気流が生じることで形成されます。", category: "jpcz" },
+            { id: 23, q: "JPCZの影響を受けやすい地域はどこですか？", a: "北陸（福井など）を中心に、東北から山陰にかけての日本海側の広い範囲です。", category: "jpcz", important: true },
+            { id: 24, q: "JPCZがもたらす被害の特徴は？", a: "線状に並んだ発達した雪雲が流れ込むため、短時間での記録的な大雪や激しい雷、突風を引き起こします。", category: "jpcz", important: true },
+            { id: 25, q: "なぜJPCZは「線状降雪帯」と呼ばれるのですか？", a: "夏の線状降水帯に似て、発達した雪雲が帯状に連なり、同じ場所に停滞して集中豪雪をもたらすためです。", category: "jpcz" },
+            { id: 26, q: "JPCZは太平洋側にも影響しますか？", a: "寒気が非常に強い場合、雲が山脈を越えて名古屋や京都市などに流入し、大雪を降らせることがあります。", category: "jpcz" },
+            { id: 27, q: "JPCZの長さはどのくらいですか？", a: "日本海上で長さ1,000km程度にわたる収束帯を形成します。", category: "jpcz" },
+            { id: 28, q: "JPCZとカルマン渦の関係は？", a: "JPCZのライン上ではしばしば小さな渦（擾乱）が発生し、荒れた天気を助長します。", category: "jpcz" },
+            { id: 29, q: "JPCZはどの気圧配置の時に発生しやすいですか？", a: "山雪型よりも里雪型の時に発生頻度が圧倒的に高いとされています。", category: "jpcz" },
+            { id: 30, q: "JPCZによる積雪スピードはどのくらいですか？", a: "数時間で大量の雪が降り、1時間に10cm以上積雪が急増することもあります。", category: "jpcz", important: true },
+
+            // --- 災害と安全（最重要） ---
+            { id: 31, q: "冬の主な気象災害は何ですか？", a: "大規模な車両立ち往生、鉄道の運休、停電、雪崩、除雪中の事故、一酸化炭素中毒などです。", category: "disaster", important: true },
+            { id: 32, q: "車両の「立ち往生」はなぜ危険なのですか？", a: "排気口が雪で埋まると車内に排気ガスが逆流し、一酸化炭素中毒で死亡する恐れがあるためです。", category: "disaster", important: true },
+            { id: 33, q: "「凍上（とうじょう）」とは何ですか？", a: "地中の水分が凍って地面が持ち上げられ、住宅や道路、鉄道レールが損壊する現象です。", category: "disaster", important: true },
+            { id: 34, q: "「冬季雷」とは何ですか？", a: "日本海側で冬に発生する雷で、航空機への落雷が頻発し、運航に影響を与えます。", category: "disaster", important: true },
+            { id: 35, q: "「表層雪崩」に注意が必要なのはどんな時ですか？", a: "山雪型などで新雪が短期間に大量に積もった時です。", category: "disaster", important: true },
+            { id: 36, q: "太平洋側で大雪が降る原因は？", a: "本州の南の海上を通過する「南岸低気圧」が寒気を引き込むことで発生します。", category: "disaster" },
+            { id: 37, q: "南岸低気圧による雪の予報が難しい理由は？", a: "気温がわずか1〜2℃違うだけで、雨になるか雪になるかが大きく変わるためです。", category: "disaster", important: true },
+            { id: 38, q: "冬に停電が起こる主な理由は？", a: "湿った重い雪の重みによる電線の切断や、強風による鉄塔の倒壊などが原因です。", category: "disaster", important: true },
+            { id: 39, q: "太平洋側の冬の火災リスクが高い理由は？", a: "大陸からの乾燥した空気と強風により、火の回りが早くなるためです。", category: "disaster", important: true },
+            { id: 40, q: "「春一番」に伴う災害には何がありますか？", a: "強い突風による海や山での遭難、火災、洪水、鉄道事故などが挙げられます。", category: "disaster", important: true },
+
+            // --- 予測情報と気候変動 ---
+            { id: 41, q: "「今後の雪」という情報で何がわかりますか？", a: "6時間先までの1時間ごとの積雪の深さと降雪量を、5kmメッシュの細かさで予測するツールです。", category: "forecast" },
+            { id: 42, q: "「早期注意情報」とは何ですか？", a: "5日先までに警報級の現象が予想される場合に、その可能性を［高］［中］の段階で示す情報です。", category: "forecast", important: true },
+            { id: 43, q: "大雪の「緊急発表」はいつ行われますか？", a: "数年に一度の猛ふぶきや記録的な大雪が予想され、交通網への重大な影響が懸念される際、前日に発表されます。", category: "forecast", important: true },
+            { id: 44, q: "「数年に一度の猛ふぶき」という言葉の意図は？", a: "気象台のより一層の危機感を伝え、外出を控えるなどの安全確保行動を促すためのキーワードです。", category: "forecast", important: true },
+            { id: 45, q: "地球温暖化は冬の気圧配置にどう影響しますか？", a: "温暖化によりシベリア高気圧が弱まる傾向にあり、西高東低の気圧配置が緩む「暖冬型」の日が増えると予測されています。", category: "forecast" },
+            { id: 46, q: "温暖化で雪の降り方はどう変わりますか？", a: "全体の降雪量は減少する一方で、日本海の海面水温上昇により雲に供給される水蒸気が増え、局地的なドカ雪（降雪強度）は強まる可能性があります。", category: "forecast", important: true },
+            { id: 47, q: "「三寒四温」の本来の意味は？", a: "もともとはシベリア高気圧の周期的な強弱を示す冬の言葉でしたが、現在は春先の寒暖の変化を指して使われます。", category: "forecast" },
+            { id: 48, q: "「木枯らし1号」とは何ですか？", a: "晩秋から初冬にかけて、初めて吹く強い北よりの季節風のことです。", category: "forecast" },
+            { id: 49, q: "冬に巨大地震が起きた際の特有のリスクは？", a: "津波や建物の倒壊に加え、厳しい寒さによる低体温症での死亡リスクが非常に高まります。", category: "forecast", important: true },
+            { id: 50, q: "「予防的通行規制」とは何ですか？", a: "大規模な立ち往生を未然に防ぐため、大雪が予想される段階で早めに通行止めを行い、集中的な除雪を行う仕組みです。", category: "forecast", important: true }
+        ];
+
+        // カテゴリ定義
+        const categories = [
+            { id: "all", label: "すべて表示", icon: "ph-squares-four" },
+            { id: "important", label: "⚠️ 防災・重要", icon: "ph-warning", color: "text-red-600" },
+            { id: "basic", label: "基本メカニズム", icon: "ph-cloud-snow" },
+            { id: "types", label: "雪の種類・気圧", icon: "ph-thermometer-cold" },
+            { id: "jpcz", label: "JPCZ・集中豪雪", icon: "ph-waves" },
+            { id: "disaster", label: "災害と安全", icon: "ph-siren" },
+            { id: "forecast", label: "予測・気候変動", icon: "ph-chart-line-up" }
+        ];
+
+        // 状態変数
+        let currentMode = 'card'; // 'card' or 'list'
+        let currentCategory = 'all';
+        let searchQuery = '';
+
+        // DOM要素
+        const gridEl = document.getElementById('content-grid');
+        const categoryContainerEl = document.getElementById('category-container');
+        const searchInput = document.getElementById('search-input');
+        const itemCountEl = document.getElementById('item-count');
+        const categoryTitleEl = document.getElementById('current-category-title');
+        const emptyStateEl = document.getElementById('empty-state');
+        const safetyBannerEl = document.getElementById('safety-banner');
+
+        // 初期化
+        function init() {
+            renderCategories();
+            filterAndRender();
+
+            // イベントリスナー
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                filterAndRender();
+            });
+        }
+
+        // モード切替 (カード / リスト)
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // ボタンのスタイル切替
+            const btnCard = document.getElementById('btn-mode-card');
+            const btnList = document.getElementById('btn-mode-list');
+            
+            if (mode === 'card') {
+                btnCard.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-blue-700 shadow-sm";
+                btnList.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-white hover:bg-white/10";
+            } else {
+                btnList.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-blue-700 shadow-sm";
+                btnCard.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-white hover:bg-white/10";
+            }
+            
+            filterAndRender();
+        }
+
+        // カテゴリ選択
+        function setCategory(catId) {
+            currentCategory = catId;
+            renderCategories(); // アクティブ状態更新
+            filterAndRender();
+        }
+
+        // カテゴリボタン描画
+        function renderCategories() {
+            categoryContainerEl.innerHTML = categories.map(cat => {
+                const isActive = currentCategory === cat.id;
+                const baseClass = "w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center";
+                const activeClass = "bg-sky-100 text-sky-700 border border-sky-200";
+                const inactiveClass = "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+                const iconColor = cat.color ? cat.color : "text-slate-400";
+                const activeIconColor = cat.color ? cat.color : "text-sky-500";
+
+                return `
+                    <button onclick="setCategory('${cat.id}')" 
+                        class="${baseClass} ${isActive ? activeClass : inactiveClass}">
+                        <i class="ph-fill ${cat.icon} mr-2.5 ${isActive ? activeIconColor : iconColor} text-lg"></i>
+                        ${cat.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // フィルタリングと描画実行
+        function filterAndRender() {
+            // データフィルタリング
+            const filtered = faqData.filter(item => {
+                const matchesSearch = item.q.toLowerCase().includes(searchQuery) || item.a.toLowerCase().includes(searchQuery);
+                const matchesCategory = currentCategory === 'all' || 
+                                      (currentCategory === 'important' && item.important) ||
+                                      item.category === currentCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            // UI要素の更新
+            itemCountEl.textContent = `${filtered.length}項目`;
+            const catObj = categories.find(c => c.id === currentCategory);
+            categoryTitleEl.textContent = catObj ? catObj.label : '検索結果';
+            
+            // 安全/重要バナーの表示制御
+            if (currentCategory === 'important' || currentCategory === 'disaster') {
+                safetyBannerEl.classList.remove('hidden');
+            } else {
+                safetyBannerEl.classList.add('hidden');
+            }
+
+            // 該当なしの場合
+            if (filtered.length === 0) {
+                gridEl.innerHTML = '';
+                emptyStateEl.classList.remove('hidden');
+                return;
+            } else {
+                emptyStateEl.classList.add('hidden');
+            }
+
+            // グリッド描画
+            if (currentMode === 'card') {
+                renderCards(filtered);
+            } else {
+                renderList(filtered);
+            }
+        }
+
+        // カードモードの描画
+        function renderCards(items) {
+            gridEl.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4";
+            
+            gridEl.innerHTML = items.map(item => {
+                const dangerClass = item.important ? "border-red-200 danger-glow" : "border-slate-200";
+                const dangerBadge = item.important ? `<span class="absolute top-2 right-2 bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold border border-red-200"><i class="ph-fill ph-warning"></i> 重要</span>` : '';
+                const icon = item.important ? "ph-warning-octagon text-red-400" : "ph-question text-sky-400";
+                
+                return `
+                    <div class="card group h-48 cursor-pointer perspective-1000" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full text-center transition-all duration-500 transform-style-3d">
+                            
+                            <!-- 表面 (質問) -->
+                            <div class="absolute w-full h-full backface-hidden bg-white rounded-xl shadow-sm border ${dangerClass} p-6 flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+                                ${dangerBadge}
+                                <i class="ph-fill ${icon} text-3xl mb-3"></i>
+                                <h3 class="font-bold text-slate-700 leading-relaxed">${item.q}</h3>
+                                <p class="mt-3 text-xs text-slate-400 font-medium bg-slate-100 px-3 py-1 rounded-full">タップして答えを見る</p>
+                            </div>
+
+                            <!-- 裏面 (回答) -->
+                            <div class="absolute w-full h-full backface-hidden bg-slate-800 rounded-xl shadow-md border border-slate-700 p-6 flex flex-col items-center justify-center rotate-y-180">
+                                ${item.important ? '<span class="text-red-400 text-xs font-bold mb-1">防災ポイント</span>' : '<span class="text-sky-400 text-xs font-bold mb-1">解説</span>'}
+                                <p class="text-white text-sm md:text-base leading-relaxed text-left w-full">${item.a}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // リストモードの描画
+        function renderList(items) {
+            gridEl.className = "flex flex-col gap-3";
+
+            gridEl.innerHTML = items.map(item => {
+                const borderClass = item.important ? "border-l-4 border-l-red-500" : "border-l-4 border-l-sky-500";
+                
+                return `
+                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 ${borderClass}">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                ${item.important 
+                                    ? '<i class="ph-fill ph-warning text-red-500 text-xl"></i>' 
+                                    : '<i class="ph-fill ph-question text-sky-500 text-xl"></i>'}
+                            </div>
+                            <div class="flex-grow">
+                                <h3 class="font-bold text-slate-800 mb-2 ${item.important ? 'text-red-900' : ''}">
+                                    ${item.q}
+                                </h3>
+                                <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    ${item.a}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 雪背景の適用
+        document.body.classList.add('snow-bg');
+
+        // アプリケーション開始
+        init();
+
+    </script>
+</body>
+</html>
