@@ -1,121 +1,439 @@
-# 役割と目的
-あなたは「洗練されたミニマル・ポートフォリオ」を作成するプロフェッショナルなアートディレクターです。
-以下の「デザインガイドライン」と「レイアウトカタログ」に基づき、提供されたソース資料の内容をプレゼンテーションのスライド構成案としてまとめてください。
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WVN-50 COBRA TRAINING SYS</title>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background-color: #020617; /* slate-950 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        /* スクロールバーのカスタマイズ */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+        /* アニメーション定義 */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-# 出力要件
-各スライドについて、以下の項目を出力してください：
-1. **スライドタイトル**: (英語のサンセリフ体を想定した簡潔なタイトル)
-2. **本文/キーメッセージ**: (日本語ゴシック体を想定した内容)
-3. **推奨レイアウト**: (以下のカタログから最適なものを選択)
-4. **デザイン指示**: (スライド作成者への具体的なビジュアル指示。色、配置、画像のイメージなど)
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
----
+        // --- Icons (Inline SVGs) ---
+        // React Fragment <>...</> を使用して複数のパス要素を正しくラップしています
+        const IconBase = ({ d, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {d}
+            </svg>
+        );
 
-# デザインガイドライン
+        const Flame = (props) => <IconBase {...props} d={<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.6-3.3.7 2.3 2.9 3.8 2.9 3.8z"/>} />;
+        const ShieldAlert = (props) => <IconBase {...props} d={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></>} />;
+        const Wind = (props) => <IconBase {...props} d={<><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></>} />;
+        const Droplets = (props) => <IconBase {...props} d={<><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></>} />;
+        const Activity = (props) => <IconBase {...props} d={<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>} />;
+        const Award = (props) => <IconBase {...props} d={<><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></>} />;
+        const Book = (props) => <IconBase {...props} d={<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>} />;
+        const Home = (props) => <IconBase {...props} d={<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>} />;
+        const ChevronUp = (props) => <IconBase {...props} d={<path d="m18 15-6-6-6 6"/>} />;
+        const ChevronDown = (props) => <IconBase {...props} d={<path d="m6 9 6 6 6-6"/>} />;
+        const RotateCcw = (props) => <IconBase {...props} d={<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></>} />;
 
-## 全体トーン
-プロフェッショナル、建築的、エッジの効いたミニマリズム
+        // --- データ定義 ---
+        const cobraData = [
+            {
+                part: 1,
+                title: "開発の背景と目的",
+                icon: <Flame className="w-6 h-6" />,
+                questions: [
+                { q: "なぜ水圧換気ノズルが開発されたのか？", a: "高気密・高断熱な現代建築における「フラッシュオーバー」の危険性を回避し、隊員の屋内進入を安全かつ迅速にするため。" },
+                { q: "開発のきっかけは？", a: "北海道モリタから海外の水力換気資機材を紹介されたこと。その後、札幌市消防局、北海道モリタ、ヨネ株式会社の3機関による共同開発が開始された。" },
+                { q: "従来のPPV（陽圧換気）の課題は？", a: "複雑な構造では気流管理が困難なこと、排煙機設置のタイムラグ、視界不良による水損被害の拡大などが課題だった。" }
+                ]
+            },
+            {
+                part: 2,
+                title: "COBRAの特徴と仕様",
+                icon: <ShieldAlert className="w-6 h-6" />,
+                questions: [
+                { q: "「COBRA」の名称由来は？", a: "「COne(円錐)」「BRAve(勇敢)」「REform(改革)」「Attack(攻撃)」の頭文字。また、ノズル形状がコブラに似ているため。" },
+                { q: "主な仕様（型式・重量・サイズ）は？", a: "型式：WVN-50、質量：約6.5kg、サイズ：高さ1800mm×奥行600mm。" },
+                { q: "放水流量は？", a: "主ノズル：340L/min (0.7MPa時)。抑制ノズル：0・40・80L/minの3段階切替。" },
+                { q: "「抑制ノズル」とは何か？", a: "主ノズルで排煙しつつ、室内の天井付近（高温層）へ噴霧放水し、冷却・フラッシュオーバー抑制を行うノズル。" },
+                { q: "抑制ノズルの工夫点は？", a: "360度回転式で設置状況に対応可能。冷却効果を高めるため、水粒子径が小さくなるよう設計されている。" }
+                ]
+            },
+            {
+                part: 3,
+                title: "物理学的原理",
+                icon: <Wind className="w-6 h-6" />,
+                questions: [
+                { q: "排煙の原理は？", a: "「ベンチュリ効果」。高速水流周辺に負圧（陰圧）が発生し、煙や熱気を屋外へ吸い出す。" },
+                { q: "ベルヌーイの定理との関係は？", a: "流速が増加すると静圧が低下する定理を利用し、ノズル直後の圧力低下で空気を引き込む。" },
+                { q: "なぜ噴霧（フォグ）放水なのか？", a: "水滴の総表面積が増え、空気との接触・摩擦による連行力が向上し、効率的に煙を押し出せるため。" }
+                ]
+            },
+            {
+                part: 4,
+                title: "設置と利用手順",
+                icon: <Droplets className="w-6 h-6" />,
+                questions: [
+                { q: "基本的な設置方法は？", a: "屋外から窓枠などの開口部にノズルを引っ掛けるだけ。室内進入不要。" },
+                { q: "最大の効果を得る噴霧角度は？", a: "80度〜90度。" },
+                { q: "開口部に対する放水の理想形は？", a: "噴霧が開口部の約8割を占める状態（窓枠内側いっぱい）。" },
+                { q: "排気口からノズルまでの距離は？", a: "0.6m 〜 1.0m程度。" },
+                { q: "操作性の特筆機能は？", a: "手元のハンドルで噴霧角度を調整可能。姿勢を崩さず安全に最大効果を維持できる。" }
+                ]
+            },
+            {
+                part: 5,
+                title: "消火活動への影響",
+                icon: <Activity className="w-6 h-6" />,
+                questions: [
+                { q: "内部環境はどう変化するか？", a: "視界がクリアになり、後方から涼しい風を感じるほど環境が改善される。" },
+                { q: "消火効率へのメリットは？", a: "火点を的確に捉えられるため、最小限の水量で消火可能（水損被害低減）。" },
+                { q: "延焼防止効果は？", a: "陰圧換気で気流が一定になり、排気方向を制御できるため、隣接建物への延焼も防止しやすい。" },
+                { q: "複雑な建物でも使えるか？", a: "区画（部屋）単位での換気が可能なため、複雑な構造でも柔軟に対応可能。" }
+                ]
+            },
+            {
+                part: 6,
+                title: "安全性とメンテナンス",
+                icon: <ShieldAlert className="w-6 h-6" />,
+                questions: [
+                { q: "隊員の安全確保策は？", a: "排気口付近は有毒ガスが集中するため、屋外でも空気呼吸器（SCBA）を完全着装する。" },
+                { q: "連携時の注意点は？", a: "換気部隊と屋内進入隊の緊密な連携が必要。指示系統を明確にする。" },
+                { q: "使用後の洗浄方法は？", a: "真水で煤や薬剤を除去し、完全に乾燥させる。" },
+                { q: "使用禁止の洗浄剤は？", a: "シンナー、ベンジン、ガソリン等の有機溶剤（強度低下・破裂の危険）。" },
+                { q: "定期点検の頻度は？", a: "6ヶ月ごと（消防法準拠）。結合部、パッキン、動作などを確認。" },
+                { q: "耐圧性能の基準は？", a: "製造後10年経過品は、常用圧力を超える圧力（1.3MPa等）での耐圧試験を推奨。" }
+                ]
+            },
+            {
+                part: 7,
+                title: "実戦運用と展望",
+                icon: <Award className="w-6 h-6" />,
+                questions: [
+                { q: "実績はあるか？", a: "札幌市消防局にて、試行運用18件中10件で効果を確認済。" },
+                { q: "中高層建物での使用は？", a: "可能。はしご車バスケットからベランダへ進入し設定する戦術がある。" },
+                { q: "強風時の注意点は？", a: "自然風に負ける可能性があるため、風向きに合わせて放水角度を微調整する。" },
+                { q: "今後の展開は？", a: "札幌市内全隊への配備完了（令和6年度末）。CAFS（圧縮空気泡システム）との併用研究など。" }
+                ]
+            }
+        ];
 
-## 配色ルール（指示用）
-- **ベース**: ライトグレー(#E9E9E9) または 白(#FFFFFF)
-- **文字**: 漆黒(#000000) または ダークグレー(#333333)
-- **アクセント**: 黒(#000000) - 太い線や強調に使用
-- **特別色**: ダークモード（黒背景） - インパクト重視のスライドのみ
+        // --- コンポーネント ---
 
-## 共通ルール
-- **ナビゲーション**: 左上に「01. INTRODUCTION」のようなセクション表示
-- **余白**: ネガティブスペースを広く取り、情報を詰め込みすぎない
+        const Button = ({ children, onClick, variant = "primary", className = "" }) => {
+            const baseStyle = "font-bold py-3 px-6 rounded shadow-md transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2";
+            const variants = {
+                primary: "bg-red-700 hover:bg-red-600 text-white border-b-4 border-red-900",
+                secondary: "bg-slate-700 hover:bg-slate-600 text-white border-b-4 border-slate-900",
+                accent: "bg-orange-500 hover:bg-orange-400 text-black border-b-4 border-orange-700",
+                outline: "border-2 border-slate-500 text-slate-300 hover:border-slate-300 hover:text-white"
+            };
+            return (
+                <button className={`${baseStyle} ${variants[variant]} ${className}`} onClick={onClick}>
+                {children}
+                </button>
+            );
+        };
 
----
+        const Card = ({ title, children, className = "" }) => (
+            <div className={`bg-slate-800 border-l-4 border-orange-500 rounded-r-lg shadow-lg overflow-hidden ${className}`}>
+                {title && <div className="bg-slate-900/50 p-3 font-bold text-orange-500 border-b border-slate-700">{title}</div>}
+                <div className="p-4">{children}</div>
+            </div>
+        );
 
-# レイアウトカタログ（ここから選択）
+        // --- メインアプリ ---
 
-**1. タイトル・タイポグラフィ**
-- 特徴: 散布レイアウト。キーワードをスタンプのように配置し、中央に小さく太いタイトル。
+        function CobraApp() {
+            const [mode, setMode] = useState('menu'); // menu, manual, drill, drill-result
+            const [activeCategory, setActiveCategory] = useState(null);
+            
+            // Drill State
+            const [drillCards, setDrillCards] = useState([]);
+            const [currentCardIndex, setCurrentCardIndex] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [score, setScore] = useState(0);
 
-**2. テキスト＋データ強調**
-- 特徴: 非対称分割。左にテキスト、右に巨大な黒字の数字。細い区切り線。
+            // Drill Start
+            const startDrill = () => {
+                const allQuestions = cobraData.flatMap(cat => cat.questions);
+                const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+                setDrillCards(shuffled);
+                setCurrentCardIndex(0);
+                setScore(0);
+                setIsFlipped(false);
+                setMode('drill');
+            };
 
-**3. カードグリッド**
-- 特徴: 隙間の狭いグリッドに高品質な画像を配置。Web的な表現。
+            // Drill Logic
+            const handleDrillAnswer = (known) => {
+                if (known) setScore(s => s + 1);
+                
+                if (currentCardIndex < drillCards.length - 1) {
+                setCurrentCardIndex(prev => prev + 1);
+                setIsFlipped(false);
+                } else {
+                setMode('drill-result');
+                }
+            };
 
-**4. 全画面グラフィック**
-- 特徴: 画面全体に彩度を落としたオフィス内観写真（コンクリート、Mac等）。左下に極小キャプション。
+            // Rank Calculation
+            const getRank = (score) => {
+                if (score === 10) return { title: "消防司令長", color: "text-yellow-400", msg: "完璧だ！COBRAマスターとして現場を指揮せよ！" };
+                if (score >= 8) return { title: "消防司令", color: "text-orange-400", msg: "素晴らしい知識だ。隊員への指導も頼む。" };
+                if (score >= 6) return { title: "消防士長", color: "text-blue-400", msg: "合格ラインだ。さらに知識を深めよ。" };
+                return { title: "消防士", color: "text-slate-400", msg: "再訓練が必要だ。マニュアルを読み直せ。" };
+            };
 
-**5. 写真＋リスト分割**
-- 特徴: 50:50分割。左は建築的写真、右はデータリスト（英語太字見出し＋日本語細字）。
+            // --- Views ---
 
-**6. ミニマル地図**
-- 特徴: ライトグレー背景に白地図シルエット。極細の引き出し線。
+            const renderMenu = () => (
+                <div className="flex flex-col gap-6 animate-fade-in">
+                <div className="text-center space-y-2 mb-4">
+                    <div className="inline-block bg-orange-600 text-black font-black px-3 py-1 rounded skew-x-[-10deg]">
+                    SAPPORO FIRE BUREAU x MORITA
+                    </div>
+                    <h2 className="text-4xl font-black text-white tracking-tighter drop-shadow-lg">
+                    <span className="text-red-600">COBRA</span> DIGITAL<br/>TRAINING
+                    </h2>
+                    <p className="text-slate-400 text-sm">水圧換気ノズル取扱・知識習得アプリ</p>
+                </div>
 
-**7. 垂直タイムライン**
-- 特徴: 中央の細い縦線から左右にテキストが分岐。年代順。
+                <div className="grid gap-4">
+                    <Button onClick={() => setMode('manual')} variant="secondary" className="h-20 text-xl">
+                    <Book className="w-8 h-8" />
+                    <div className="text-left">
+                        <div className="text-xs text-slate-400">REFERENCE</div>
+                        装備資料閲覧
+                    </div>
+                    </Button>
 
-**8. バブルチャート / ベン図**
-- 特徴: 黒背景に白のワイヤーフレーム風線画。透明度のある円の重なり。
+                    <Button onClick={startDrill} variant="primary" className="h-24 text-2xl border-orange-700 bg-gradient-to-r from-red-700 to-red-800">
+                    <Activity className="w-8 h-8 animate-pulse" />
+                    <div className="text-left">
+                        <div className="text-xs text-orange-200">TRAINING DRILL</div>
+                        想定訓練開始
+                    </div>
+                    </Button>
+                </div>
+                
+                <div className="mt-8 p-4 bg-slate-900 rounded border border-slate-700">
+                    <h3 className="text-xs text-slate-500 font-bold mb-2 uppercase">Core Principles</h3>
+                    <div className="flex justify-between text-center">
+                    {[
+                        { l: "C", w: "Cone" },
+                        { l: "O", w: "" },
+                        { l: "B", w: "Brave" },
+                        { l: "R", w: "Reform" },
+                        { l: "A", w: "Attack" }
+                    ].map((item, i) => (
+                        <div key={i} className="flex flex-col items-center">
+                            <span className="text-xl font-black text-red-600">{item.l}</span>
+                            <span className="text-[10px] text-slate-400">{item.w}</span>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+                </div>
+            );
 
-**9. 対話形式（チャット）**
-- 特徴: シンプルなテキストブロックと太字話者名によるミニマルな会話。
+            const renderManual = () => (
+                <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between mb-4 border-b border-slate-700 pb-2">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Book className="w-5 h-5 text-orange-500" /> 装備資料
+                    </h2>
+                    <Button onClick={() => setMode('menu')} variant="outline" className="py-1 px-3 text-xs">
+                    <Home className="w-4 h-4" /> MENU
+                    </Button>
+                </div>
 
-**10. 年表リスト**
-- 特徴: 左列に巨大な年号、右列に説明。フォントサイズ対比を強調。
+                <div className="space-y-3">
+                    {cobraData.map((part, idx) => (
+                    <div key={idx} className="rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                        <button 
+                        onClick={() => setActiveCategory(activeCategory === idx ? null : idx)}
+                        className={`w-full p-4 flex items-center justify-between transition-colors ${activeCategory === idx ? 'bg-slate-700 text-orange-400' : 'text-slate-200 hover:bg-slate-750'}`}
+                        >
+                        <div className="flex items-center gap-3 font-bold text-left">
+                            <div className={`p-2 rounded ${activeCategory === idx ? 'bg-orange-500 text-black' : 'bg-slate-900 text-slate-400'}`}>
+                            {part.icon}
+                            </div>
+                            <span>{part.title}</span>
+                        </div>
+                        {activeCategory === idx ? <ChevronUp /> : <ChevronDown />}
+                        </button>
+                        
+                        {activeCategory === idx && (
+                        <div className="bg-slate-900/50 p-4 space-y-4 border-t border-slate-700">
+                            {part.questions.map((q, qIdx) => (
+                            <div key={qIdx} className="bg-slate-800 p-4 rounded border-l-2 border-red-600">
+                                <h4 className="text-orange-100 font-bold mb-2 flex gap-2">
+                                <span className="text-red-500">Q.</span> {q.q}
+                                </h4>
+                                <p className="text-slate-300 text-sm leading-relaxed pl-6">
+                                <span className="font-bold text-green-500 mr-2">A.</span>
+                                {q.a}
+                                </p>
+                            </div>
+                            ))}
+                        </div>
+                        )}
+                    </div>
+                    ))}
+                </div>
+                </div>
+            );
 
-**11. ダークモード図解**
-- 特徴: 黒背景に白の細い線でノードを繋ぐネットワーク図（テック×クリエイティブ）。
+            const renderDrill = () => {
+                const card = drillCards[currentCardIndex];
+                return (
+                <div className="h-full flex flex-col animate-fade-in">
+                    <div className="flex items-center justify-between mb-2">
+                    <div className="text-slate-400 font-mono">Q.{currentCardIndex + 1} / 10</div>
+                    <Button onClick={() => setMode('menu')} variant="outline" className="py-1 px-2 text-xs border-none">中止</Button>
+                    </div>
 
-**12. 3ステップ・カラム**
-- 特徴: 巨大な数字（01, 02, 03）を柱にしたタイポグラフィ中心のデザイン。
+                    <div className="flex-grow flex flex-col justify-center perspective-1000 my-4">
+                    <div 
+                        onClick={() => setIsFlipped(!isFlipped)}
+                        className="relative w-full min-h-[300px] bg-slate-800 border-2 border-slate-600 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl hover:border-orange-500 transition-all duration-300"
+                    >
+                        {!isFlipped ? (
+                        <div className="animate-in fade-in zoom-in duration-300">
+                            <div className="text-orange-500 font-black text-6xl opacity-20 absolute top-4 left-4">Q</div>
+                            <h3 className="text-xl font-bold text-white mb-8">{card.q}</h3>
+                            <p className="text-slate-400 text-sm animate-pulse">タップして正解を確認</p>
+                        </div>
+                        ) : (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
+                            <div className="text-green-500 font-black text-6xl opacity-20 absolute top-4 left-4">A</div>
+                            <p className="text-lg text-white font-medium leading-relaxed mb-6">{card.a}</p>
+                        </div>
+                        )}
+                    </div>
+                    </div>
 
-**13. ロゴグリッド**
-- 特徴: モノクロ化したロゴを格子状に整列。
+                    {isFlipped && (
+                    <div className="grid grid-cols-2 gap-4 mt-auto">
+                        <Button onClick={() => handleDrillAnswer(false)} variant="secondary" className="bg-slate-700">
+                        <RotateCcw className="w-5 h-5" /> 
+                        要復習
+                        </Button>
+                        <Button onClick={() => handleDrillAnswer(true)} variant="accent" className="bg-green-600 border-green-800 hover:bg-green-500 text-white">
+                        <Award className="w-5 h-5" /> 
+                        習得済
+                        </Button>
+                    </div>
+                    )}
+                </div>
+                );
+            };
 
-**14. 2カラム（課題 vs 解決）**
-- 特徴: 中央の太い黒縦線で分断。「課題」と「解決」を対比。
+            const renderResult = () => {
+                const rank = getRank(score);
+                return (
+                <div className="text-center h-full flex flex-col items-center justify-center animate-fade-in space-y-6">
+                    <div className="space-y-2">
+                    <h2 className="text-3xl font-black italic text-slate-300">MISSION COMPLETE</h2>
+                    <div className="text-sm text-slate-500">訓練終了 - 結果発表</div>
+                    </div>
 
-**15. 中央配置（ダークモード）**
-- 特徴: 黒背景中央にキービジュアル。情緒的な英語タグライン。
+                    <div className="w-full bg-slate-800 rounded-lg p-8 border-2 border-slate-700 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 via-orange-500 to-red-600"></div>
+                    
+                    <div className="text-6xl font-black mb-2 text-white">{score} <span className="text-2xl text-slate-500">/ 10</span></div>
+                    <div className={`text-2xl font-bold ${rank.color} mb-4`}>{rank.title}</div>
+                    <p className="text-slate-300 text-sm">{rank.msg}</p>
 
-**16. 数式・フロー図**
-- 特徴: 「A × B = C」形式を巨大なセリフ体で表現。ミニマルな矢印。
+                    <div className="mt-6 flex justify-center gap-1">
+                        {[...Array(10)].map((_, i) => (
+                        <div key={i} className={`h-2 w-full rounded-sm ${i < score ? 'bg-green-500' : 'bg-slate-700'}`}></div>
+                        ))}
+                    </div>
+                    </div>
 
-**17. 矢印ステップ**
-- 特徴: 大きな黒矢印の中に白文字テキスト。ハイコントラスト。
+                    <div className="flex gap-4 w-full">
+                    <Button onClick={startDrill} variant="primary" className="flex-1">
+                        再訓練
+                    </Button>
+                    <Button onClick={() => setMode('menu')} variant="secondary" className="flex-1">
+                        メニュー
+                    </Button>
+                    </div>
+                </div>
+                );
+            };
 
-**18. チャート**
-- 特徴: 細い線の先に小さな黒丸がついた、科学計測器のような精密グラフ。
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-4 md:p-8 flex justify-center">
+                <div className="w-full max-w-md bg-slate-900 min-h-[80vh] rounded-2xl shadow-2xl overflow-hidden border border-slate-800 relative flex flex-col">
+                    {/* Header Bar */}
+                    <div className="bg-slate-950 p-3 flex justify-between items-center border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-red-600 w-3 h-3 rounded-full animate-pulse"></div>
+                        <span className="font-bold tracking-widest text-slate-400 text-xs">WVN-50 COBRA SYS.</span>
+                    </div>
+                    <div className="text-[10px] text-slate-600">VER 1.0</div>
+                    </div>
 
-# Universal Design Logic (鉄の掟: プロフェッショナル品質保証)
+                    {/* Content Area */}
+                    <div className="flex-grow p-6 overflow-y-auto custom-scrollbar">
+                    {mode === 'menu' && renderMenu()}
+                    {mode === 'manual' && renderManual()}
+                    {mode === 'drill' && renderDrill()}
+                    {mode === 'drill-result' && renderResult()}
+                    </div>
 
-あなたは上記のスタイルを適用しつつ、以下の「スライドデザインにおける絶対的な原則」を最優先で遵守し、構成案を出力しなければなりません。
+                    {/* Footer Decoration */}
+                    <div className="bg-slate-950 p-2 border-t border-slate-800 flex justify-center gap-4 opacity-50">
+                    <div className="h-1 w-8 bg-slate-700 rounded"></div>
+                    <div className="h-1 w-8 bg-slate-700 rounded"></div>
+                    <div className="h-1 w-8 bg-slate-700 rounded"></div>
+                    </div>
+                </div>
+                </div>
+            );
+        }
 
-## 1. 配色の鉄則 (The 60-30-10 Rule)
-色彩の無秩序を防ぎ、視認性を確保するために以下の比率を厳守してください。
-- **ベースカラー (60%)**: 背景色。コンテンツを邪魔しない色。
-- **メインカラー (30%)**: ブランドイメージを作る主役の色。
-- **アクセントカラー (10%)**: 「ここを見てほしい」という一点のみに使う強調色。
-**【禁止】**: 4色以上の有彩色を無意味に使うこと。アクセントカラーを全体に散らすこと。
-
-## 2. 視認性とコントラスト (Accessibility)
-- **コントラスト比**: 背景と文字の明度差（コントラスト）を最大化する指示を出してください。（例：濃い背景には必ず白文字、薄い背景には濃い黒文字）
-- **文字サイズ**: プロジェクター投影やスマホ閲覧を考慮し、本文は「最小24pt以上」を想定した文章量に削ってください。詰め込みすぎは悪です。
-
-## 3. 認知的負荷の低減 (One Slide, One Message)
-- 人間の脳は一度に複数の情報を処理できません。1枚のスライドで伝えるメッセージは「たった1つ」に絞ってください。
-- ソース資料に複数の要素がある場合は、「要素を詰め込む」のではなく「スライド枚数を分けて」構成してください。
-
-## 4. 視線誘導 (Z-Pattern / F-Pattern)
-- 人の視線は「左上から右下」へ流れます。最も重要な結論やタイトルは左上、詳細は中央、行動喚起（ネクストステップ）は右下に配置するようレイアウト指示を出してください。
-
-## 5. ノイズの排除 (Signal-to-Noise Ratio)
-- 「装飾のためだけの装飾」は、情報伝達の邪魔（ノイズ）です。
-- 意味のないアイコン、読めない薄さの文字、複雑すぎる背景パターンは「削除」するよう指示に含めてください。
-
-## 6. トンマナの完全統一 (Coherence & Consistency)
-資料全体が一つの人格、一つのブランドとして認識されるよう、以下の統一を徹底してください。
-
-- **Verbal Identity (言葉の統一)**:
-    - **語尾の固定**: 全スライドで文体を統一してください。（例：「〜だ/〜である」調か、「〜です/〜ます」調か、あるいは「体言止め（名詞終了）」か。一度決めたら最後まで変えないこと。）
-    - **用語の統一**: 同じ対象を指す言葉を揺らがせないでください。（NG例: スライド1で「ユーザー」、スライド3で「顧客」、スライド5で「クライアント」と呼び変えること。1つに固定する。）
-
-- **Visual DNA (視覚の統一)**:
-    - **反復の原則**: 決定したデザイン要素（角丸の半径、線の太さ、アイコンのスタイル、見出しの配置位置）を、全スライドで「コピー＆ペースト」したかのように厳密に繰り返してください。スライドごとに新しいレイアウトを発明する必要はありません。
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CobraApp />);
+    </script>
+</body>
+</html>
