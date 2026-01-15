@@ -132,7 +132,7 @@ e-Learning№２
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 9</div>
-      <div class="lesson-desc">危険物火災対応</div>
+      <div class="lesson-desc">水圧換気ノズル</div>
       <a href="lesson9/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
