@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消防職員 自転車通勤安全研修</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (CDN) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (JSX変換用 CDN) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* フォント設定 */
+        .font-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        .font-sans {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        /* アニメーション */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Tailwindのデフォルト設定の上書きや追加が必要な場合 */
+        body {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- アイコンコンポーネント (Lucide Reactの代わり) ---
+        const IconBase = ({ children, className }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const BookOpen = ({ className }) => (
+            <IconBase className={className}>
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </IconBase>
+        );
+        const CheckCircle = ({ className }) => (
+            <IconBase className={className}>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </IconBase>
+        );
+        const RefreshCw = ({ className }) => (
+            <IconBase className={className}>
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+            </IconBase>
+        );
+        const Award = ({ className }) => (
+            <IconBase className={className}>
+                <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </IconBase>
+        );
+        const ChevronDown = ({ className }) => (
+            <IconBase className={className}>
+                <polyline points="6 9 12 15 18 9"/>
+            </IconBase>
+        );
+        const ChevronUp = ({ className }) => (
+            <IconBase className={className}>
+                <polyline points="18 15 12 9 6 15"/>
+            </IconBase>
+        );
+        const ShieldAlert = ({ className }) => (
+            <IconBase className={className}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </IconBase>
+        );
+        const Book = ({ className }) => (
+            <IconBase className={className}>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </IconBase>
+        );
+
+
+        // --- データ定義 ---
+
+        const faqData = [
+          { q: "自転車通勤中にスマホを操作することは禁止されましたか？", a: "はい。スマートフォンなどを手で保持して通話したり、画面を注視したりする行為が新たに禁止され、罰則の対象となりました。" },
+          { q: "スマホホルダーに固定して画面を見るのは違反ですか？", a: "手で保持していなくても、走行中に画面を「注視」する行為は禁止されています。" },
+          { q: "停止中にスマホを操作するのは違反ですか？", a: "いいえ。停止中の操作は罰則の対象外です。" },
+          { q: "なぜ「ながらスマホ」の罰則が強化されたのですか？", a: "自転車運転中の携帯電話使用等に起因する交通事故が増加傾向にあるため、事故を抑止する目的で整備されました。" },
+          { q: "「ながらスマホ」で事故を起こしそうになった場合の罰則は？", a: "1年以下の拘禁刑または30万円以下の罰金が科せられます。" },
+          { q: "単にスマホを手に持って通話しただけの罰則は？", a: "6月以下の拘禁刑または10万円以下の罰金です。" },
+          { q: "通勤中に地図アプリをチラチラ見る程度なら大丈夫ですか？", a: "画面を「注視」する行為は禁止されており、交通事故の原因となる悪質・危険な違反とみなされれば取締りの対象となります。" },
+          { q: "「ながらスマホ」は講習制度の対象になりますか？", a: "はい。自転車運転者講習制度の対象となる「危険行為」に含まれます。" },
+          { q: "自転車の酒気帯び運転には、どのような罰則が新設されましたか？", a: "3年以下の拘禁刑または50万円以下の罰金という厳しい罰則が整備されました。" },
+          { q: "通勤後の「一杯」を飲んで自転車で帰宅するのは違反ですか？", a: "はい。酒気を帯びた状態での運転は厳禁であり、罰則の対象です。" },
+          { q: "同僚が飲酒していると知りながら、自転車を貸して帰らせた場合は？", a: "「自転車の提供者」として、運転者と同じ3年以下の拘禁刑または50万円以下の罰金が科せられます。" },
+          { q: "同僚とお酒を飲み、その同僚が自転車で帰るのを止めずに見送った場合は？", a: "「酒類の提供者」として、2年以下の拘禁刑または30万円以下の罰金が科せられる可能性があります。" },
+          { q: "飲酒運転の自転車に後ろに乗せてもらった（同乗した）場合は？", a: "「同乗者」に対しても、2年以下の拘禁刑または30万円以下の罰金が科せられます。" },
+          { q: "なぜ酒気帯び運転の罰則がこれほど厳しいのですか？", a: "自転車の酒気帯び運転による事故は、死亡・重傷事故となる確率が高いためです。" },
+          { q: "酒気帯び運転も「講習制度」の対象になりますか？", a: "はい、対象になります。" },
+          { q: "自転車の「青切符」制度はいつから始まりますか？", a: "令和8年（2026年）4月1日までに導入されます。" },
+          { q: "青切符が導入される背景は何ですか？", a: "都内での自転車関連事故の増加や、交通ルールを守らない利用者への苦情が多いこと、また検挙手続きを効率化するためです。" },
+          { q: "青切符制度の対象となるのは何歳からですか？", a: "16歳以上の運転者が対象です。" },
+          { q: "16歳未満が違反をした場合はどうなりますか？", a: "原則として、青切符ではなく「指導警告」が行われます。" },
+          { q: "青切符を導入するメリットは何ですか？", a: "自動車と同様に、違反者の手続き的な負担を軽減しつつ、実効性のある違反処理が可能になります。" },
+          { q: "警察官はどんな違反でもすぐに青切符を切るのですか？", a: "基本的には「指導警告」を行いますが、事故の原因となる悪質・危険な違反には取締り（青切符や赤切符）を行います。" },
+          { q: "青切符が導入されたら、通勤時の交通違反はどう変わりますか？", a: "反則金を納めることで手続きが完了する仕組みになり、より厳格かつ迅速に処理されるようになります。" },
+          { q: "配達業務中の自転車も青切符の対象ですか？", a: "はい。通勤だけでなく、業務やシェアサイクルなどの利用もすべて含まれます。" },
+          { q: "「赤切符」と「青切符」はどう使い分けられますか？", a: "違反の実情（悪質性や危険性）に即して、指導警告、青切符、赤切符が使い分けられます。" },
+          { q: "青切符制度は全国で導入されるのですか？", a: "道路交通法という国の法律の改正に基づくため、全国的な制度です。" },
+          { q: "「自転車運転者講習制度」とは何ですか？", a: "危険な違反（危険行為）を3年以内に2回以上繰り返した者に対し、講習の受講を命じる制度です。" },
+          { q: "講習の対象となる「危険行為」には何がありますか？", a: "新しく「ながらスマホ」や「酒気帯び運転」が追加されました。" },
+          { q: "講習を受けないとどうなりますか？", a: "受講命令に従わない場合は、罰金が科せられます。" },
+          { q: "通勤中の信号無視は講習の対象になりますか？", a: "はい。信号無視も交通の危険を生じさせる恐れのある「危険行為」に含まれます。" },
+          { q: "講習はどこで受けるのですか？", a: "警視庁が実施する講習を受ける必要があります。" },
+          { q: "「自転車安全利用五則」の1番目は何ですか？", a: "「車道が原則、左側を通行。歩道は例外、歩行者を優先」です。" },
+          { q: "自転車通勤で車道を走る際、右側を走ってもいいですか？", a: "いいえ、必ず左側を通行しなければなりません。" },
+          { q: "歩道を通行できるのはどんな時ですか？", a: "道路標識等で指定されている場合や、車道の状況からやむを得ない場合などです。" },
+          { q: "歩道を通る際、スピードを出して通勤してもいいですか？", a: "いいえ。歩道では車道寄りを「徐行」し、歩行者の通行を妨げる場合は一時停止しなければなりません。" },
+          { q: "夜間の通勤でライトをつけ忘れたら違反ですか？", a: "はい。夜間はライトを点灯することが義務付けられています。" },
+          { q: "交差点でのルールで注意すべきことは？", a: "信号遵守はもちろん、一時停止標識がある場所では必ず止まり、安全確認をする必要があります。" },
+          { q: "自転車通勤中に「並進（横に並んで走る）」はできますか？", a: "「並進可」の標識がない限り、並進は禁止されています。" },
+          { q: "二人乗りは認められますか？", a: "原則として禁止されています。" },
+          { q: "「自転車ナビマーク」とは何ですか？", a: "路面に描かれた、自転車が通行すべき場所と方向を示すマークです。" },
+          { q: "矢印型の「自転車ナビライン」はどう進めばいいですか？", a: "矢印の方向に沿って、左側通行を維持して進みます。" },
+          { q: "自転車保険への加入は義務ですか？", a: "東京都では、自転車利用中の対人賠償事故に備える保険等への加入が義務化されています。" },
+          { q: "通勤中の事故も保険でカバーすべきですか？", a: "はい。自身が加害者になった際、高額な賠償を命じられるケースがあるため、加入が必要です。" },
+          { q: "ヘルメットの着用は義務ですか？", a: "自転車利用者のヘルメット着用は「努力義務」となっています。" },
+          { q: "消防職員（公務員）としてヘルメットは被るべきですか？", a: "全ての自転車利用者のヘルメット着用が推奨されており、安全確保のために強く推奨されます。" },
+          { q: "「自転車安全利用モデル企業」とは何ですか？", a: "自転車の安全利用を推進している企業を警視庁が公表・認定する制度です。" },
+          { q: "勤務先が「自転車安全利用モデル企業」を目指すメリットは？", a: "企業の社会的責任（CSR）を果たし、従業員の交通事故を未然に防ぐ体制が整っていることをアピールできます。" },
+          { q: "会社での自転車安全教育は実施されていますか？", a: "「自転車の交通安全教育実施事業者公表制度」があり、教育を積極的に行う事業者が公表されます。" },
+          { q: "「自転車指導啓発重点地区・路線」とは何ですか？", a: "特に事故が多い路線などで、警察が重点的に指導や取締りを行っている場所です。" },
+          { q: "通勤ルートが「重点地区」かどうか確認する方法は？", a: "警視庁のホームページ等で公開されている情報を確認できます。" },
+          { q: "改正法を守ることで、自転車通勤はどう変わりますか？", a: "「ながらスマホ」や「飲酒運転」といった悪質な行為が淘汰され、通勤者自身の安全と歩行者の安全がより強固に守られるようになります。" }
+        ];
+
+        const fullQuizData = [
+          { id: 1, question: "2024年（令和6年）11月1日から新たに罰則の対象となった自転車の行為はどれですか？", options: ["ヘルメットの非着用", "運転中のながらスマホ", "自転車の左側通行", "夜間の無灯火"], answer: 1, explanation: "令和6年11月1日より、スマートフォンなどを手に保持しての通話や画面を注視する「ながらスマホ」が新たに罰則対象となりました。" },
+          { id: 2, question: "自転車の「ながらスマホ」において、罰則の対象外となるのはどのような時ですか？", options: ["手に持たずに注視している時", "低速で走行している時", "自転車を停止させている時", "人通りが少ない道を通っている時"], answer: 2, explanation: "スマートフォンの操作であっても、停止中の操作については罰則の対象外とされています。" },
+          { id: 3, question: "自転車の「ながらスマホ」を行い、実際に交通の危険を生じさせた場合の罰則は何ですか？", options: ["3月以下の拘禁刑または5万円以下の罰金", "6月以下の拘禁刑または10万円以下の罰金", "1年以下の拘禁刑または30万円以下の罰金", "2年以下の拘禁刑または50万円以下の罰金"], answer: 2, explanation: "単なる「ながらスマホ」よりも重く、1年以下の拘禁刑または30万円以下の罰金となります。" },
+          { id: 4, question: "自転車の「酒気帯び運転」の罰則として正しいものはどれですか？", options: ["1年以下の拘禁刑または30万円以下の罰金", "2年以下の拘禁刑または30万円以下の罰金", "3年以下の拘禁刑または50万円以下の罰金", "5年以下の拘禁刑または100万円以下の罰金"], answer: 2, explanation: "3年以下の拘禁刑または50万円以下の罰金という厳しい罰則が整備されました。" },
+          { id: 5, question: "酒気帯び運転をすることを知りながら自転車を提供した「自転車の提供者」の罰則はどうなりますか？", options: ["罰則はない", "運転者より軽い罰則になる", "運転者と同じ（3年以下の拘禁刑または50万円以下の罰金）", "同乗者と同じ罰則になる"], answer: 2, explanation: "自転車の提供者に対しても、運転者本人と同様に厳しい罰則が科せられます。" },
+          { id: 6, question: "自転車の酒気帯び運転者にお酒を提供した「酒類の提供者」への罰則は？", options: ["1年以下の拘禁刑または10万円以下の罰金", "2年以下の拘禁刑または30万円以下の罰金", "3年以下の拘禁刑または50万円以下の罰金", "過料のみ"], answer: 1, explanation: "お酒を提供した者や同乗者には「2年以下の拘禁刑または30万円以下の罰金」が科せられます。" },
+          { id: 7, question: "自転車の酒気帯び運転の車両に同乗した「同乗者」への罰則は？", options: ["罰則はない", "5万円以下の罰金", "2年以下の拘禁刑または30万円以下の罰金", "3年以下の拘禁刑または50万円以下の罰金"], answer: 2, explanation: "同乗者も酒類提供者と同じく「2年以下の拘禁刑または30万円以下の罰金」の対象です。" },
+          { id: 8, question: "なぜ「ながらスマホ」や「酒気帯び運転」の罰則が強化されたのですか？", options: ["自転車の利用者が減ったため", "事故が増加傾向にあり、特に酒気帯びは死亡・重傷事故に直結しやすいため", "自転車の通行場所を増やすため", "警察の負担を減らすため"], answer: 1, explanation: "事故抑止のため、特に死亡・重傷リスクの高い行為への罰則が強化されました。" },
+          { id: 9, question: "「ながらスマホ」や「酒気帯び運転」などの危険行為を繰り返した者に課されるものは？", options: ["自転車運転者講習", "自転車の没収", "運転免許の取り消し（自動車）", "社会奉仕活動"], answer: 0, explanation: "危険行為を反復して行った者は、自転車運転者講習制度の対象となります。" },
+          { id: 10, question: "自転車運転者講習制度の対象となる「危険行為」に新たに追加されたのはどれですか？", options: ["傘差し運転", "無灯火", "運転中のながらスマホ", "二人乗り"], answer: 2, explanation: "「運転中のながらスマホ」と「酒気帯び運転」が新たに危険行為に追加されました。" },
+          { id: 11, question: "自転車への「交通反則通告制度（青切符）」の導入はいつからですか？", options: ["令和6年11月1日", "令和7年4月1日", "令和8年4月1日（まで）", "令和10年1月1日"], answer: 2, explanation: "令和8年（2026年）4月1日までに導入される予定です。" },
+          { id: 12, question: "青切符の導入が検討された背景として、都内の交通事故情勢の正しい説明は？", options: ["自転車事故は劇的に減少している", "全交通事故に占める自転車関連事故の構成比が増加している", "自転車と歩行者の事故はほぼゼロである", "交通ルールを守る利用者が増えたため"], answer: 1, explanation: "自転車関連事故の構成比増加が背景にあります。" },
+          { id: 13, question: "青切符導入のメリットとして挙げられているのは？", options: ["違反金をすべて道路工事に充てるため", "手続きを簡易迅速に処理し、負担を軽減するため", "すべての自転車利用者を逮捕しやすくするため", "警察官の人数を増やすため"], answer: 1, explanation: "手続きの簡易迅速化により、違反者・警察双方の負担軽減と実効性確保を図ります。" },
+          { id: 14, question: "青切符（交通反則通告制度）の対象となる運転者の年齢は何歳以上ですか？", options: ["12歳以上", "14歳以上", "16歳以上", "18歳以上"], answer: 2, explanation: "16歳以上の運転者が青切符の対象です。" },
+          { id: 15, question: "16歳未満の者が交通違反をした場合、原則としてどうなりますか？", options: ["青切符を交付する", "赤切符を交付する", "指導警告を行う", "保護者を逮捕する"], answer: 2, explanation: "16歳未満には原則として指導警告が行われます。" },
+          { id: 16, question: "警察官が自転車の交通違反を認知した場合、基本的には何を行いますか？", options: ["いきなり逮捕する", "指導警告を行う", "自転車を没収する", "その場でお金を徴収する"], answer: 1, explanation: "基本は指導警告ですが、悪質な場合は取締りが行われます。" },
+          { id: 17, question: "指導警告ではなく「取締り」が行われるのは、どのような違反の場合ですか？", options: ["交通事故の原因となるような悪質・危険な違反", "初めての違反", "非常にゆっくり走っている時の違反", "16歳未満の子供の違反"], answer: 0, explanation: "事故に直結するような悪質・危険な違反は厳しく取り締まられます。" },
+          { id: 18, question: "自転車安全利用五則において、車道を通行する際の原則はどちら側ですか？", options: ["左側", "右側", "中央", "どちらでもよい"], answer: 0, explanation: "自転車は軽車両であり、車道の左側通行が原則です。" },
+          { id: 19, question: "歩道を通行できる場合において、自転車は歩道のどこを通行すべきですか？", options: ["車道寄りを徐行", "中央を速やかに", "建物寄りを徐行", "どこでも自由に"], answer: 0, explanation: "歩道通行時は、車道寄りを徐行しなければなりません。" },
+          { id: 20, question: "自転車のヘルメット着用に関する現在の規定は？", options: ["着用は禁止されている", "特定の年齢層のみ義務", "全利用者の努力義務", "全利用者の完全義務（罰則あり）"], answer: 2, explanation: "すべての自転車利用者に対して「努力義務」となっています。" },
+          { id: 21, question: "東京都において、加入が義務化されているものはどれですか？", options: ["自転車利用中の対人賠償事故に備える保険等", "自転車盗難保険", "自転車損害保険（車両保険）", "生命保険"], answer: 0, explanation: "被害者救済のため、対人賠償保険への加入が義務化されています。" },
+          { id: 22, question: "自転車の通行方法を分かりやすく示すために路面に設置されているマークは？", options: ["自転車ナビマーク・自転車ナビライン", "自転車ストップマーク", "自転車専用レーン標識", "消防水利マーク"], answer: 0, explanation: "自転車ナビマーク等は、自転車の通行すべき場所と方向を示しています。" },
+          { id: 23, question: "警視庁が自転車の安全利用を推進するために実施している企業向けの公表制度は？", options: ["自転車通勤廃止制度", "自転車の交通安全教育実施事業者公表制度", "自転車保有台数公表制度", "自転車事故ゼロ企業表彰"], answer: 1, explanation: "安全教育を積極的に行う事業者を公表する制度です。" },
+          { id: 24, question: "安全運転を推進するために企業が認定を受けることができるモデルケースの名称は？", options: ["自転車安全利用エキスパート企業", "自転車安全利用モデル企業", "自転車通勤推奨企業", "交通安全優良消防署"], answer: 1, explanation: "「自転車安全利用モデル企業」制度があります。" },
+          { id: 25, question: "高校生向けにも同様のモデル校制度がありますが、その名称は？", options: ["自転車安全運転高校", "自転車安全利用モデル高校", "自転車ルール守り隊高校", "警視庁指定自転車高校"], answer: 1, explanation: "高校生対象の「自転車安全利用モデル高校」制度があります。" },
+          { id: 26, question: "ながらスマホの「注視」とは、一般的にどの程度の時間画面を見ることですか？", options: ["0.1秒未満", "画面を注視して確認すること（具体的な秒数規定はないが危険）", "1分以上", "画面が点灯しているのを確認するだけ"], answer: 1, explanation: "秒数に関わらず、画面を注視して確認する行為自体が危険とみなされます。" },
+          { id: 27, question: "自転車の酒気帯び運転において、運転者以外に罰則が科される可能性がある人数は？", options: ["運転者のみ", "運転者と提供者の2人", "運転者、自転車提供者、酒類提供者、同乗者の最大4者", "無制限"], answer: 2, explanation: "運転者、自転車提供者、酒類提供者、同乗者のすべてが罰則対象になり得ます。" },
+          { id: 28, question: "青切符制度で反則金を納めるとどうなりますか？", options: ["前科がつく", "刑事裁判を経ずに手続きが処理される", "運転免許が必ず停止になる", "自転車が没収される"], answer: 1, explanation: "反則金の納付により、刑事手続きに移行せずに処理が完了します。" },
+          { id: 29, question: "自転車運転者講習を受講命令に従わなかった場合、どうなりますか？", options: ["何も起きない", "5万円以下の罰金が科される場合がある", "職を失う", "自動車免許取消"], answer: 1, explanation: "受講命令違反には罰金規定があります。" },
+          { id: 30, question: "都内の全交通事故に占める「自転車関連事故」の割合はどうなっていますか？", options: ["減少している", "増加している", "横ばいである", "ほぼゼロである"], answer: 1, explanation: "自転車関連事故の構成比は増加傾向にあります。" },
+          { id: 31, question: "「自転車指導啓発重点地区・路線」とはどのような場所ですか？", options: ["自転車が通行禁止の場所", "特に指導や啓発を強化して行う地域や道", "自転車専用の高速道路", "駐輪場がない場所"], answer: 1, explanation: "事故多発路線などで重点的に指導が行われる場所です。" },
+          { id: 32, question: "自転車安全利用五則に含まれないものはどれですか？", options: ["車道が原則、左側を通行", "交差点での信号遵守と一時停止・安全確認", "夜間はライトを点灯", "自転車は歩道の右側を通行"], answer: 3, explanation: "歩道の右側通行というルールは存在しません（歩道内は車道寄り徐行）。" },
+          { id: 33, question: "自転車の「酒気帯び運転」に該当するのは？", options: ["ビール10リットル以上", "基準値以上のアルコールを体内に保有して運転すること", "自分が酔っていると感じた時のみ", "事故を起こした時のみ"], answer: 1, explanation: "呼気中のアルコール濃度が基準値以上の場合に該当します。" },
+          { id: 34, question: "自転車通勤を推奨する企業が留意すべきことは？", options: ["スピードの出しすぎを推奨", "従業員の安全教育の実施や保険加入の確認", "罰金の立て替え", "自転車の改造"], answer: 1, explanation: "企業には安全教育の実施や保険加入状況の把握が求められます。" },
+          { id: 35, question: "自転車ナビマークがある場所での自転車の正しい通行場所は？", options: ["マークの上を走ってはいけない", "マークに沿って車道の左端を通行する", "マークがある歩道を通行する", "右側通行をする"], answer: 1, explanation: "ナビマークは車道の左端など、通行すべき場所を示しています。" },
+          { id: 36, question: "赤信号で交差点に進入した場合、講習制度の対象になりますか？", options: ["ならない", "なる（信号無視は危険行為）", "事故が起きなければならない", "夜間のみなる"], answer: 1, explanation: "信号無視は「危険行為」の一つであり、繰り返すと講習の対象になります。" },
+          { id: 37, question: "歩道を通行中、歩行者の通行を妨げそうな場合はどうすべきですか？", options: ["ベルを鳴らす", "大声を出す", "一時停止する", "加速して通り抜ける"], answer: 2, explanation: "歩行者優先ですので、妨げる恐れがある場合は一時停止しなければなりません。" },
+          { id: 38, question: "「並進可」の標識がない場所で、2台並んで走ることは？", options: ["推奨される", "禁止されている", "3分間だけなら良い", "通勤時のみ良い"], answer: 1, explanation: "並進は原則禁止されています。" },
+          { id: 39, question: "夜間、街灯が明るい場所でもライトは必要ですか？", options: ["明るければ不要", "必要（点灯義務がある）", "反射材があれば不要", "歩道なら不要"], answer: 1, explanation: "周囲の明るさに関わらず、夜間はライトの点灯が義務です。" },
+          { id: 40, question: "自転車も一時停止標識（止まれ）に従う必要がありますか？", options: ["自動車だけ従えばよい", "従う必要がある", "徐行でよい", "誰も見ていなければよい"], answer: 1, explanation: "自転車も軽車両であり、標識に従う義務があります。" },
+          { id: 41, question: "雨天時に傘を差して片手運転することは？", options: ["上手なら良い", "透明傘なら良い", "禁止されている（不安定で危険）", "カッパがない時だけ良い"], answer: 2, explanation: "傘差し運転は不安定になり視野も遮られるため禁止されています。" },
+          { id: 42, question: "イヤホンをして音楽を聴きながらの運転は？", options: ["周囲の音が聞こえない状態なら違反", "どんな音量でも合法", "片耳なら絶対安全", "クラシックなら良い"], answer: 0, explanation: "安全運転に必要な音や声が聞こえない状態での運転は違反となります。" },
+          { id: 43, question: "自転車のベル（警音器）をむやみに鳴らすことは？", options: ["歩行者を避けるために推奨", "違反になる可能性がある", "挨拶代わりなら良い", "壊れていなければ良い"], answer: 1, explanation: "危険を防止するためやむを得ない場合以外に鳴らすことは禁止されています。" },
+          { id: 44, question: "子供を前後に乗せて3人乗りをする条件は？", options: ["誰でもできる", "適合した自転車で、幼児2人同乗基準を満たす場合のみ", "力があれば良い", "距離が短ければ良い"], answer: 1, explanation: "「幼児2人同乗用自転車」の基準を満たした自転車等でなければ3人乗りはできません。" },
+          { id: 45, question: "事故を起こした場合、警察への届け出は必要ですか？", options: ["相手が怪我をしてなければ不要", "当事者同士で解決すれば不要", "必ず必要", "自転車なら不要"], answer: 2, explanation: "自転車事故であっても、警察への報告義務があります。" },
+          { id: 46, question: "被害者が怪我をしている場合、最初に行うべきは？", options: ["現場から逃げる", "救護活動（119番通報等）", "自転車の修理", "会社への連絡"], answer: 1, explanation: "負傷者の救護が最優先義務です。" },
+          { id: 47, question: "「自転車安全利用モデル企業」の認定主体は？", options: ["消防署", "警視庁（警察署）", "区役所", "国土交通省"], answer: 1, explanation: "警視庁が実施しています。" },
+          { id: 48, question: "改正法において「過労運転」は禁止されていますか？", options: ["自転車には関係ない", "禁止されている", "眠くなければ良い", "夜間のみ禁止"], answer: 1, explanation: "自転車であっても、正常な運転ができない恐れがある過労時の運転は禁止です。" },
+          { id: 49, question: "自転車通勤者が加害者となり、高額賠償を請求される事例は？", options: ["実際にある（数千万円以上の事例も）", "日本では存在しない", "保険会社が全額払うので問題ない", "公務員は免除される"], answer: 0, explanation: "自転車事故で9,000万円以上の賠償命令が出た事例もあります。" },
+          { id: 50, question: "消防職員として自転車の交通ルールを守るべき最大の理由は？", options: ["罰金を払いたくないから", "罰則を逃れるため", "市民の模範となり、事故を未然に防いで地域の安全を守るため", "自転車の点検が面倒だから"], answer: 2, explanation: "地域の安全を担う公務員として、規範意識を持ち事故を抑止することが重要です。" },
+        ];
+
+        // --- ユーティリティ関数 ---
+
+        const shuffleArray = (array) => {
+          const newArray = [...array];
+          for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+          }
+          return newArray;
+        };
+
+        // --- アプリケーション本体 ---
+
+        const App = () => {
+          const [activeTab, setActiveTab] = useState('menu'); 
+          const [quizSet, setQuizSet] = useState([]);
+          const [userAnswers, setUserAnswers] = useState({});
+          const [showResult, setShowResult] = useState(false);
+          const [score, setScore] = useState(0);
+
+          const startQuiz = () => {
+            const shuffled = shuffleArray(fullQuizData);
+            const selected = shuffled.slice(0, 10);
+            setQuizSet(selected);
+            setUserAnswers({});
+            setShowResult(false);
+            setScore(0);
+            setActiveTab('quiz');
+            window.scrollTo(0, 0);
+          };
+
+          const handleAnswer = (questionId, optionIndex) => {
+            setUserAnswers(prev => ({
+              ...prev,
+              [questionId]: optionIndex
+            }));
+          };
+
+          const calculateScore = () => {
+            let currentScore = 0;
+            quizSet.forEach(q => {
+              if (userAnswers[q.id] === q.answer) {
+                currentScore++;
+              }
+            });
+            setScore(currentScore);
+            setShowResult(true);
+            window.scrollTo(0, 0);
+          };
+
+          const FAQList = () => {
+            const [openIndex, setOpenIndex] = useState(null);
+
+            return (
+              <div className="max-w-3xl mx-auto space-y-4 animate-fade-in">
+                <h2 className="text-2xl font-serif text-slate-800 border-b-2 border-amber-600 pb-2 mb-6 flex items-center">
+                  <Book className="w-6 h-6 mr-2 text-amber-700" />
+                  改正道路交通法 FAQ
+                </h2>
+                {faqData.map((item, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                    <button
+                      onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-start">
+                        <span className="font-serif font-bold text-amber-700 mr-3 text-lg">Q.</span>
+                        <span className="font-medium text-slate-800 text-base mt-0.5">{item.q}</span>
+                      </div>
+                      {openIndex === index ? <ChevronUp className="text-slate-400 flex-shrink-0" /> : <ChevronDown className="text-slate-400 flex-shrink-0" />}
+                    </button>
+                    {openIndex === index && (
+                      <div className="px-6 py-4 bg-white border-t border-slate-100">
+                        <div className="flex items-start">
+                          <span className="font-serif font-bold text-slate-600 mr-3 text-lg">A.</span>
+                          <p className="text-slate-600 leading-relaxed">{item.a}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="mt-8 text-center">
+                    <button 
+                        onClick={() => setActiveTab('menu')}
+                        className="px-6 py-2 text-slate-600 hover:text-slate-800 underline"
+                    >
+                        メニューに戻る
+                    </button>
+                </div>
+              </div>
+            );
+          };
+
+          const QuizComponent = () => {
+            const isAllAnswered = quizSet.length > 0 && Object.keys(userAnswers).length === quizSet.length;
+
+            return (
+              <div className="max-w-3xl mx-auto animate-fade-in pb-12">
+                {showResult && (
+                  <div className="bg-white border-2 border-amber-600 rounded-lg p-8 mb-8 shadow-lg text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-slate-900 via-amber-600 to-slate-900"></div>
+                    <Award className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                    <h3 className="text-xl text-slate-600 font-serif mb-2">採点結果</h3>
+                    <div className="text-5xl font-bold text-slate-800 font-serif mb-4">
+                      {score} <span className="text-2xl font-normal text-slate-500">/ 10問</span>
+                    </div>
+                    <p className="text-slate-600 mb-6">
+                      {score === 10 ? "素晴らしい成績です。引き続き安全運転を心がけてください。" : 
+                       score >= 7 ? "合格ラインです。間違えた問題を確認しましょう。" : 
+                       "知識の再確認が必要です。解説をよく読みましょう。"}
+                    </p>
+                    <button
+                      onClick={startQuiz}
+                      className="inline-flex items-center px-8 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 transition-colors shadow-md font-serif tracking-wide"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      問題を入れ替えて再度挑戦する
+                    </button>
+                  </div>
+                )}
+
+                {!showResult && (
+                   <div className="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
+                     <h2 className="text-2xl font-serif text-slate-800 flex items-center">
+                        <CheckCircle className="w-6 h-6 mr-2 text-amber-700" />
+                        安全運転知識確認テスト
+                     </h2>
+                     <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                       全50問からランダム10問
+                     </span>
+                   </div>
+                )}
+
+                <div className="space-y-8">
+                  {quizSet.map((q, index) => {
+                    const isCorrect = userAnswers[q.id] === q.answer;
+                    
+                    return (
+                      <div key={q.id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-start">
+                          <span className="bg-slate-800 text-white font-serif text-sm px-2 py-1 rounded mr-3 mt-0.5 whitespace-nowrap">
+                            問 {index + 1}
+                          </span>
+                          <h3 className="text-lg font-medium text-slate-800 leading-snug">
+                            {q.question}
+                          </h3>
+                        </div>
+                        
+                        <div className="p-6 space-y-3">
+                          {q.options.map((option, optIndex) => {
+                            let btnClass = "w-full text-left p-4 rounded border transition-all duration-200 flex items-center ";
+                            
+                            if (showResult) {
+                              if (optIndex === q.answer) {
+                                btnClass += "bg-green-50 border-green-500 text-green-800 font-semibold";
+                              } else if (userAnswers[q.id] === optIndex) {
+                                btnClass += "bg-red-50 border-red-300 text-red-800";
+                              } else {
+                                btnClass += "bg-white border-slate-100 text-slate-400 opacity-60";
+                              }
+                            } else {
+                              if (userAnswers[q.id] === optIndex) {
+                                btnClass += "bg-amber-50 border-amber-500 text-slate-900 shadow-inner ring-1 ring-amber-500";
+                              } else {
+                                btnClass += "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300";
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={optIndex}
+                                onClick={() => !showResult && handleAnswer(q.id, optIndex)}
+                                disabled={showResult}
+                                className={btnClass}
+                              >
+                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 flex-shrink-0
+                                  ${showResult && optIndex === q.answer ? 'border-green-600 bg-green-600 text-white' : 
+                                    userAnswers[q.id] === optIndex ? 'border-amber-600 bg-amber-600 text-white' : 'border-slate-300 bg-white'}`}
+                                >
+                                  {showResult && optIndex === q.answer && <CheckCircle className="w-3 h-3" />}
+                                </div>
+                                {option}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {showResult && (
+                          <div className={`px-6 py-4 border-t ${isCorrect ? 'bg-green-50/50' : 'bg-red-50/50'}`}>
+                            <div className="flex items-start">
+                              <div className={`flex-shrink-0 px-2 py-1 rounded text-xs font-bold mr-3 ${isCorrect ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                {isCorrect ? '正解' : '不正解'}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-700 mb-1">【解説】</p>
+                                <p className="text-sm text-slate-600 leading-relaxed">{q.explanation}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!showResult && (
+                  <div className="mt-10 text-center space-y-4">
+                    <button
+                      onClick={calculateScore}
+                      disabled={!isAllAnswered}
+                      className={`px-12 py-4 rounded shadow-lg font-serif text-lg tracking-wider transition-all
+                        ${isAllAnswered 
+                          ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white hover:from-slate-700 hover:to-slate-800 transform hover:-translate-y-1' 
+                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                    >
+                      採点する
+                    </button>
+                    {!isAllAnswered && (
+                        <p className="text-sm text-red-500 mt-2">※すべての問題に回答してください</p>
+                    )}
+                     <div className="mt-4">
+                        <button 
+                            onClick={() => setActiveTab('menu')}
+                            className="text-slate-500 hover:text-slate-800 underline text-sm"
+                        >
+                            中断してメニューに戻る
+                        </button>
+                    </div>
+                  </div>
+                )}
+                
+                {showResult && (
+                     <div className="mt-8 text-center">
+                        <button 
+                            onClick={() => setActiveTab('menu')}
+                            className="px-6 py-2 text-slate-600 hover:text-slate-800 underline"
+                        >
+                            メニューに戻る
+                        </button>
+                    </div>
+                )}
+              </div>
+            );
+          };
+
+          const MenuScreen = () => (
+            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 py-8 animate-fade-in">
+              <div 
+                onClick={() => setActiveTab('faq')}
+                className="bg-white p-8 rounded-lg shadow-md border-t-4 border-slate-700 hover:shadow-xl transition-all cursor-pointer group"
+              >
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-slate-200 transition-colors">
+                  <BookOpen className="w-8 h-8 text-slate-700" />
+                </div>
+                <h2 className="text-2xl font-serif text-slate-800 mb-3">FAQ（よくある質問）</h2>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  改正道路交通法の施行に伴う、自転車通勤者のための重要事項50項目をQ&A形式で確認できます。
+                </p>
+                <span className="text-amber-700 font-bold text-sm flex items-center group-hover:underline">
+                  学習を始める &rarr;
+                </span>
+              </div>
+
+              <div 
+                onClick={startQuiz}
+                className="bg-white p-8 rounded-lg shadow-md border-t-4 border-amber-600 hover:shadow-xl transition-all cursor-pointer group"
+              >
+                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-6 group-hover:bg-amber-100 transition-colors">
+                  <ShieldAlert className="w-8 h-8 text-amber-600" />
+                </div>
+                <h2 className="text-2xl font-serif text-slate-800 mb-3">e-Learning 確認テスト</h2>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  全50問のプールから毎回ランダムに10問が出題されます。採点機能と解説付きで、実践的な知識を習得できます。
+                </p>
+                <span className="text-amber-700 font-bold text-sm flex items-center group-hover:underline">
+                  テストを開始する &rarr;
+                </span>
+              </div>
+            </div>
+          );
+
+          return (
+            <div className="min-h-screen bg-slate-100 text-slate-800 font-sans selection:bg-amber-200 selection:text-slate-900">
+              <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+                <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-700 rounded-full flex items-center justify-center shadow-inner border-2 border-slate-800">
+                        <span className="font-serif font-bold text-white text-lg">消</span>
+                    </div>
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-serif tracking-wide text-amber-50">消防職員 自転車通勤安全研修</h1>
+                        <p className="text-xs text-slate-400 font-light tracking-wider">FIRE DEPARTMENT TRAFFIC SAFETY E-LEARNING</p>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <main className="max-w-6xl mx-auto px-4 py-8">
+                {activeTab === 'menu' && <MenuScreen />}
+                {activeTab === 'faq' && <FAQList />}
+                {activeTab === 'quiz' && <QuizComponent />}
+              </main>
+
+              <footer className="bg-slate-900 text-slate-500 py-6 mt-12 text-center text-sm border-t border-slate-800">
+                <p>&copy; Fire Department Safety Training Division. All Rights Reserved.</p>
+                <p className="mt-1 text-xs text-slate-600">Based on Revised Road Traffic Law (Nov 2024 / May 2026)</p>
+              </footer>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
