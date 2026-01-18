@@ -142,7 +142,7 @@ e-Learning№２
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 11</div>
-      <div class="lesson-desc">心理対応・住民支援</div>
+      <div class="lesson-desc">消防物品貸借管理アプリ</div>
       <a href="lesson11/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
