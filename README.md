@@ -147,7 +147,7 @@ e-Learning№２
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 12</div>
-      <div class="lesson-desc">無線通信障害対応</div>
+      <div class="lesson-desc">日勤救急隊や日勤機動救急隊</div>
       <a href="lesson12/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
