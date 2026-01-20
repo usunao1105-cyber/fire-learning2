@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日勤救急隊ナレッジベース</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* カスタムスクロールバー（オプション） */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- アイコンコンポーネント (Lucide icons as SVGs) ---
+        const IconBase = ({ children, className = "", ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Search = (props) => <IconBase {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></IconBase>;
+        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></IconBase>;
+        const Activity = (props) => <IconBase {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></IconBase>;
+        const Truck = (props) => <IconBase {...props}><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polyline points="16 8 20 8 23 11 23 16"></polyline><line x1="16" y1="16" x2="23" y2="16"></line><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></IconBase>;
+        const Users = (props) => <IconBase {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></IconBase>;
+        const TrendingUp = (props) => <IconBase {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></IconBase>;
+        const Telescope = (props) => <IconBase {...props}><path d="m10.065 12.493-6.15 6.15a2.121 2.121 0 0 1-3-3l6.15-6.15"></path><path d="M14.94 13.313l-4.59-4.59"></path><path d="M6.657 16.05 4.536 18.172"></path><path d="M11.66 11.047 7.794 14.913"></path><circle cx="17" cy="7" r="5"></circle></IconBase>;
+        const ChevronDown = (props) => <IconBase {...props}><polyline points="6 9 12 15 18 9"></polyline></IconBase>;
+        const Award = (props) => <IconBase {...props}><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></IconBase>;
+        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></IconBase>;
+        const XCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></IconBase>;
+        const Menu = (props) => <IconBase {...props}><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></IconBase>;
+        const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconBase>;
+        const MapIcon = (props) => <IconBase {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></IconBase>;
+
+
+        // --- データ定義 (全50問) ---
+        const faqData = [
+            // カテゴリー1：基礎知識
+            { id: 1, category: 'basic', q: '日勤救急隊とは何ですか？', a: '救急要請が集中する平日の日中時間帯（例：午前8時30分から午後5時15分など）に限定して稼働する救急隊です。通常の24時間勤務の救急隊とは勤務体系が異なります。' },
+            { id: 2, category: 'basic', q: 'なぜ日勤救急隊が必要なのですか？', a: '高齢化等による救急需要の増大に対応するため、要請が集中する時間帯の体制を強化し、現場到着時間の短縮を図るためです。また、職員の多様な働き方を推進する目的もあります。' },
+            { id: 3, category: 'basic', q: '日勤救急隊はいつ稼働していますか？', a: '基本的に、平日の朝（8時半頃）から夕方（17時頃）まで稼働しています。土日祝日は稼働しないのが一般的です。' },
+            { id: 4, category: 'basic', q: '救急需要が最も多い時間帯はいつですか？', a: '午前8時から午後6時までの日中帯に、全救急搬送の約6割から7割以上が集中しています。特に午前10時から正午にかけてがピークとなる傾向があります。' },
+            { id: 5, category: 'basic', q: '全国でどのくらいの消防本部が導入していますか？', a: '2024年4月時点で、全国の消防本部の約13％にあたる95本部が導入しており、年々増加傾向にあります。' },
+            { id: 6, category: 'basic', q: '通常の救急車と見た目の違いはありますか？', a: '基本的には同じ高規格救急車を使用しますが、東京消防庁の「救急機動部隊」のように、識別性を高めるために特殊なデザインの感染防止衣や腕章を着用している場合があります。' },
+            { id: 7, category: 'basic', q: 'どのような職員が乗車していますか？', a: '育児・介護中の職員、定年退職後の再任用職員、または通常の救急隊員が乗車します。少なくとも1名は救急救命士の資格保有者が含まれます。' },
+            { id: 8, category: 'basic', q: '日勤救急隊の導入は、法律や基準に基づいていますか？', a: 'はい。総務省消防庁が「日勤救急隊の導入検討について」という通知を出し、地域の実情に応じた導入を推奨しています。' },
+            { id: 9, category: 'basic', q: '「役場救急」とは関係ありますか？', a: '直接の関係はありません。役場救急は消防本部がない町村が役場職員で行うものですが、日勤救急隊は消防本部が組織的に運用する正規の救急隊です。' },
+            { id: 10, category: 'basic', q: '日勤救急隊を呼ぶための専用番号はありますか？', a: 'ありません。通常の「119番」通報を行えば、指令センターが最も近くにいる適切な救急隊（日勤隊含む）を出動させます。' },
+            
+            // カテゴリー2：運用・活動
+            { id: 11, category: 'operation', q: '勤務終了時間（定時）直前に出動要請があった場合はどうなりますか？', a: '出動します。救急活動は緊急性が高いため、退勤時間を過ぎても活動を完了させてから帰署します。場合によっては残業となりますが、他の隊員がサポートに入ることもあります。' },
+            { id: 12, category: 'operation', q: '隊員の食事や休憩はどうしていますか？', a: '連続出動で食事がとれない場合、病院の売店やコンビニエンスストアで購入・摂取することを認めている消防本部もあります。' },
+            { id: 13, category: 'operation', q: '日勤救急隊は何名で編成されますか？', a: '通常は3名〜4名で編成されます。通常の24時間隊を増やすには交代要員含め9名程度必要ですが、日勤隊は3〜4名で運用できるため、効率的に増隊できます。' },
+            { id: 14, category: 'operation', q: '救急救命士は乗っていますか？', a: 'はい。質の高い救急処置を行うため、救急救命士が含まれるように編成されています。' },
+            { id: 15, category: 'operation', q: '日勤救急隊はすべての救急事案に対応しますか？', a: '基本的には通常の救急隊と同様に対応しますが、一部の自治体では転院搬送に特化して運用を開始した例もあります。' },
+            { id: 16, category: 'operation', q: '高速道路での事故にも出動しますか？', a: '管轄内であれば出動します。通常の救急隊と同様の能力と装備を持っています。' },
+            { id: 17, category: 'operation', q: '出動しない時間は何をしていますか？', a: '救急出動の待機に加え、救急事務処理、救命講習の指導、訓練などを行っています。' },
+            { id: 18, category: 'operation', q: '悪天候や災害時も稼働しますか？', a: '稼働します。むしろ救急需要が高まる災害時や感染症拡大時において、重要な戦力となります。' },
+            { id: 19, category: 'operation', q: '運用に使う車両はどこから調達していますか？', a: '新たに配備する場合や、予備車（非常用救急車）を活用して運用する場合があります。' },
+            { id: 20, category: 'operation', q: '外国語対応は可能ですか？', a: '例えば東京消防庁では、多言語音声翻訳アプリ「救急ボイストラ」やコミュニケーションボードを活用し、外国人傷病者に対応しています。' },
+
+            // カテゴリー3：機動救急隊の特徴
+            { id: 21, category: 'mobile', q: '「日勤機動救急隊」とは何ですか？', a: '特定の消防署で待機するのではなく、救急需要が高いエリアや時間帯に合わせて、待機場所を柔軟に変更（移動）する日勤救急隊のことです。' },
+            { id: 22, category: 'mobile', q: '通常の日勤救急隊との違いは何ですか？', a: '「待機場所が変わる」点です。例えば、昼間はビジネス街、夜間は繁華街など、データに基づいて救急車の方から需要の多い場所へ移動します。' },
+            { id: 23, category: 'mobile', q: '東京消防庁の「救急機動部隊」の運用エリアは？', a: '日中は「東京駅エリア」「世田谷エリア」、夜間は「六本木エリア」「新宿エリア」など、時間帯により変化する需要に合わせて活動しています。' },
+            { id: 24, category: 'mobile', q: '機動救急隊のメリットは何ですか？', a: '救急需要が高い地域にあらかじめ部隊を展開させることで、現場到着時間を短縮し、地域の救急車の空白（出払っている状態）を解消できます。' },
+            { id: 25, category: 'mobile', q: '待機場所はどのように決めていますか？', a: '過去の出動データやリアルタイムの稼働状況を分析し、救急要請が多発すると予測されるエリアや、手薄になっているエリアを特定して配置します。' },
+            { id: 26, category: 'mobile', q: '特殊な機動救急隊はありますか？', a: '東京消防庁には、感染症対応のための陰圧機能や、重体重対応ストレッチャーを備えた特殊救急車を運用する機動部隊があります。' },
+            { id: 27, category: 'mobile', q: '松山市消防局の機動救急隊の特徴は？', a: '配置署所を固定せず、その日の分析結果に基づいて配置先を決定する高度な機動運用を行っています。' },
+            { id: 28, category: 'mobile', q: '横浜市消防局の機動救急隊の特徴は？', a: '平成20年度から導入しており、救急隊が配置されていない出張所に車両を配置するなど、先駆的な運用を行ってきました。' },
+            { id: 29, category: 'mobile', q: 'どのように移動指示が出されますか？', a: '消防指令センター等が、車両の動態管理システム（AVM）やスマホで稼働率をモニタリングし、空白エリアへの移動を指示します。' },
+            { id: 30, category: 'mobile', q: '機動救急隊員は特別な訓練を受けていますか？', a: '全員が救急救命士であるなど、高い技術と知識を持った隊員で構成されることが多く、多数傷病者事案やNBC災害などにも対応できるよう訓練されています。' },
+
+            // カテゴリー4：働き方改革・人材活用
+            { id: 31, category: 'workstyle', q: '育児中の職員でも救急隊になれますか？', a: 'なれます。日勤救急隊は平日日中勤務のため、保育園の送迎が可能になるなど、育児と仕事を両立しやすい環境です。' },
+            { id: 32, category: 'workstyle', q: '女性職員の活躍にどうつながっていますか？', a: '24時間勤務が障壁となっていた女性職員が、出産・育児を経てもキャリアを継続できる受け皿となり、女性活躍推進に寄与しています。' },
+            { id: 33, category: 'workstyle', q: '定年退職した職員も働いていますか？', a: 'はい。豊富な経験を持つ再任用職員（ベテラン）が日勤救急隊として活躍しており、若手への技術伝承も期待されています。' },
+            { id: 34, category: 'workstyle', q: '育休明けの職員へのサポートはありますか？', a: '多くの本部で「リスタートプログラム」などの復職支援研修を実施し、ブランクによる不安を解消してから現場に出る仕組みがあります。' },
+            { id: 35, category: 'workstyle', q: '介護中の職員も利用できますか？', a: 'はい。親の介護などで夜勤が難しい職員にとっても、日勤救急隊は働き続けられる重要な選択肢となっています。' },
+            { id: 36, category: 'workstyle', q: '日勤救急隊の導入は離職防止になりますか？', a: 'なります。「日勤救急隊がなければ復帰できなかった」という声もあり、ライフイベントによる退職を防ぐ効果があります。' },
+            { id: 37, category: 'workstyle', q: 'ベテランと若手の組み合わせによる効果は？', a: 'ベテランの再任用職員と現職職員がチームを組むことで、経験に基づいた技術や判断力を若手に継承する教育の場としても機能します。' },
+            { id: 38, category: 'workstyle', q: '体力的な負担は軽減されますか？', a: '24時間勤務に比べ、夜間の出動がないため睡眠リズムが整いやすく、体力的な負担は軽減される傾向にあります。' },
+            { id: 39, category: 'workstyle', q: '男性職員も育児のために日勤救急隊になれますか？', a: '可能です。性別に関わらず、育児や介護などの事情を抱える職員の多様な働き方を支援する制度です。' },
+            { id: 40, category: 'workstyle', q: '将来的に24時間勤務に戻ることはできますか？', a: '可能です。育児が落ち着いた段階などで、本人の希望により通常の24時間勤務の救急隊へ復帰するルートもあります。' },
+
+            // カテゴリー5：導入効果
+            { id: 41, category: 'effect', q: '現場到着時間はどれくらい短縮されましたか？', a: '導入した自治体では、平均で数十秒から3分程度の短縮効果が報告されています（例：豊橋市で約3分、富山市で約50秒）。' },
+            { id: 42, category: 'effect', q: '既存の救急隊への影響は？', a: '日中の出動件数を日勤救急隊が分担することで、24時間勤務の救急隊の負担が軽減され、過重労働の緩和につながっています。' },
+            { id: 43, category: 'effect', q: '救命率への影響はありますか？', a: '現場到着時間の短縮は、心肺停止傷病者への処置開始を早めるため、救命率の向上に寄与すると考えられます。' },
+            { id: 44, category: 'effect', q: '「空白地域」の解消とはどういうことですか？', a: '管轄の救急車が出動してしまうと、その地域が手薄（空白）になり遠くから救急車を呼ぶ必要がありますが、日勤隊がそこをカバーすることで、到着遅延を防ぐことができます。' },
+            { id: 45, category: 'effect', q: '具体的な成功事例を教えてください。', a: '名古屋市では日勤隊の導入により、救急隊の稼働率上昇が抑制され、現場到着時間が短縮されました。豊橋市では育休復帰職員の活躍の場として機能しています。' },
+
+            // カテゴリー6：今後の展望
+            { id: 46, category: 'future', q: '今後の課題は何ですか？', a: '日勤隊が稼働していない夜間や土日の救急需要への対応、および少人数編成であるため急な休みへの対応（要員確保）などが課題とされています。' },
+            { id: 47, category: 'future', q: 'AI（人工知能）は活用されていますか？', a: 'はい。AIを活用して救急需要を予測し、日勤機動救急隊を最適な場所に配置するシミュレーションやシステムの導入が進められています。' },
+            { id: 48, category: 'future', q: 'マイナンバーカードとの連携はありますか？', a: '川越地区消防組合などの一部地域で、マイナ保険証を活用して傷病者情報を正確に把握し、搬送を迅速化する実証事業が行われています。' },
+            { id: 49, category: 'future', q: '救急搬送以外の業務も行いますか？', a: '高齢者宅への予防救急指導や、応急手当の普及啓発活動など、地域防災力を高める活動も期待されています。' },
+            { id: 50, category: 'future', q: '私たちの地域にも日勤救急隊は来ますか？', a: '導入自治体は増えていますが、まだ全国の約13%です。お住まいの地域の消防本部の広報やホームページ等で確認することをお勧めします。' },
+        ];
+
+        const categories = [
+            { id: 'all', label: 'すべて', icon: BookOpen, desc: '全カテゴリーを表示' },
+            { id: 'basic', label: '基礎知識', icon: Activity, desc: '日勤救急隊の基本' },
+            { id: 'operation', label: '運用・活動', icon: Truck, desc: '実際の活動内容' },
+            { id: 'mobile', label: '機動救急隊', icon: MapIcon, desc: '動く救急拠点' },
+            { id: 'workstyle', label: '働き方・人材', icon: Users, desc: '職員の多様性' },
+            { id: 'effect', label: '導入効果', icon: TrendingUp, desc: '実績とメリット' },
+            { id: 'future', label: '今後の展望', icon: Telescope, desc: '課題と未来' },
+        ];
+
+        // --- コンポーネント ---
+
+        // カテゴリー選択ボタン（サイドバー/ドロワー用）
+        const CategoryButton = ({ item, active, onClick }) => (
+            <button
+                onClick={() => onClick(item.id)}
+                className={`w-full text-left px-4 py-3 rounded-lg flex items-center transition-all duration-300 group
+                ${active 
+                    ? 'bg-blue-800 text-white shadow-md border-r-4 border-blue-400' 
+                    : 'hover:bg-blue-50 text-slate-600 hover:text-blue-800'
+                }`}
+            >
+                <item.icon className={`w-5 h-5 mr-3 ${active ? 'text-blue-300' : 'text-slate-400 group-hover:text-blue-600'}`} />
+                <div>
+                    <div className="font-bold text-sm">{item.label}</div>
+                    <div className={`text-xs ${active ? 'text-blue-200' : 'text-slate-400'}`}>{item.desc}</div>
+                </div>
+            </button>
+        );
+
+        // FAQカード
+        const FAQCard = ({ item, isOpen, onToggle }) => (
+            <div 
+                className={`bg-white rounded-xl border border-slate-100 overflow-hidden transition-all duration-300 
+                ${isOpen ? 'shadow-lg ring-1 ring-blue-100' : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'}`}
+            >
+                <button 
+                    onClick={onToggle}
+                    className="w-full text-left px-6 py-4 flex justify-between items-start gap-4"
+                >
+                    <div className="flex-1">
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 mb-2">
+                        Q{item.id}
+                        </span>
+                        <h3 className={`font-bold text-lg leading-relaxed ${isOpen ? 'text-blue-900' : 'text-slate-700'}`}>
+                        {item.q}
+                        </h3>
+                    </div>
+                    <div className={`mt-1 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                        <ChevronDown className="w-5 h-5 text-blue-400" />
+                    </div>
+                </button>
+                
+                <div 
+                    className={`overflow-hidden transition-all duration-300 ease-in-out bg-blue-50/30
+                    ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                    <div className="px-6 py-4 border-t border-blue-100 text-slate-700 leading-relaxed">
+                        <div className="flex gap-3">
+                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs mt-0.5">
+                                A
+                            </div>
+                            <p>{item.a}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // クイズモード
+        const QuizMode = ({ onExit }) => {
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [score, setScore] = useState(0);
+            const [quizSet, setQuizSet] = useState([]);
+            const [completed, setCompleted] = useState(false);
+
+            useEffect(() => {
+                // ランダムに5問抽出
+                const shuffled = [...faqData].sort(() => 0.5 - Math.random());
+                setQuizSet(shuffled.slice(0, 5));
+            }, []);
+
+            const handleNext = (isCorrect) => {
+                if (isCorrect) setScore(s => s + 1);
+                
+                if (currentQuestionIndex < quizSet.length - 1) {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setShowAnswer(false);
+                } else {
+                    setCompleted(true);
+                }
+            };
+
+            if (quizSet.length === 0) return <div className="p-10 text-center">Loading...</div>;
+
+            const currentQ = quizSet[currentQuestionIndex];
+
+            if (completed) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in">
+                        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                            <Award className="w-12 h-12 text-blue-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-blue-900 mb-2">クイズ終了！</h2>
+                        <p className="text-slate-600 mb-6">あなたの正解数は...</p>
+                        <div className="text-5xl font-bold text-blue-600 mb-8">
+                            {score} / 5
+                        </div>
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => {
+                                    setCompleted(false);
+                                    setCurrentQuestionIndex(0);
+                                    setScore(0);
+                                    setShowAnswer(false);
+                                    const shuffled = [...faqData].sort(() => 0.5 - Math.random());
+                                    setQuizSet(shuffled.slice(0, 5));
+                                }}
+                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            >
+                                <RefreshCw className="w-4 h-4" /> もう一度
+                            </button>
+                            <button 
+                                onClick={onExit}
+                                className="px-6 py-3 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition"
+                            >
+                                終了する
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-2xl mx-auto p-4 h-full flex flex-col justify-center">
+                    <div className="mb-6 flex justify-between items-center text-sm font-semibold text-slate-400">
+                        <span>QUESTION {currentQuestionIndex + 1} / 5</span>
+                        <button onClick={onExit} className="text-slate-400 hover:text-slate-600">中断</button>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden min-h-[400px] flex flex-col">
+                        <div className="p-8 flex-grow flex items-center justify-center bg-blue-900">
+                            <h3 className="text-xl md:text-2xl font-bold text-white text-center leading-relaxed">
+                                {currentQ.q}
+                            </h3>
+                        </div>
+
+                        <div className="p-8 bg-slate-50 flex flex-col items-center">
+                            {!showAnswer ? (
+                                <button
+                                    onClick={() => setShowAnswer(true)}
+                                    className="w-full max-w-sm py-4 bg-white border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition shadow-sm"
+                                >
+                                    答えを見る
+                                </button>
+                            ) : (
+                                <div className="w-full animate-fade-in-up">
+                                    <div className="mb-8 p-6 bg-white rounded-xl border border-slate-200 text-slate-700 text-center shadow-inner">
+                                        {currentQ.a}
+                                    </div>
+                                    <p className="text-center text-slate-500 mb-4 text-sm font-semibold">この答えを知っていましたか？</p>
+                                    <div className="flex gap-4 justify-center">
+                                        <button
+                                            onClick={() => handleNext(true)}
+                                            className="flex-1 max-w-[160px] py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle className="w-5 h-5" /> 知ってた
+                                        </button>
+                                        <button
+                                            onClick={() => handleNext(false)}
+                                            className="flex-1 max-w-[160px] py-3 bg-red-400 text-white rounded-lg font-bold hover:bg-red-500 transition flex items-center justify-center gap-2"
+                                        >
+                                            <XCircle className="w-5 h-5" /> 知らなかった
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // メインアプリケーション
+        const App = () => {
+            const [activeCategory, setActiveCategory] = useState('all');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [openId, setOpenId] = useState(null);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [mode, setMode] = useState('list'); // 'list' or 'quiz'
+
+            // フィルタリング処理
+            const filteredData = useMemo(() => {
+                return faqData.filter(item => {
+                    const matchCategory = activeCategory === 'all' || item.category === activeCategory;
+                    const matchSearch = item.q.includes(searchTerm) || item.a.includes(searchTerm);
+                    return matchCategory && matchSearch;
+                });
+            }, [activeCategory, searchTerm]);
+
+            // カテゴリー表示名
+            const currentCategoryLabel = categories.find(c => c.id === activeCategory)?.label;
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
+                    
+                    {/* モバイル用ヘッダー */}
+                    <div className="md:hidden bg-blue-900 text-white p-4 flex justify-between items-center sticky top-0 z-20 shadow-md">
+                        <div className="font-bold text-lg flex items-center gap-2">
+                            <Truck className="w-6 h-6" />
+                            <span>日勤救急隊ガイド</span>
+                        </div>
+                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                            {isSidebarOpen ? <X /> : <Menu />}
+                        </button>
+                    </div>
+
+                    {/* サイドバーナビゲーション */}
+                    <aside 
+                        className={`
+                        fixed md:sticky top-0 h-screen w-64 bg-white border-r border-slate-200 z-10 transition-transform duration-300 overflow-y-auto
+                        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                        flex flex-col
+                        `}
+                    >
+                        <div className="p-6 border-b border-slate-100 bg-blue-900 text-white hidden md:block">
+                            <h1 className="text-xl font-bold flex items-center gap-2">
+                                <Truck className="w-6 h-6 text-blue-300" />
+                                日勤救急隊<br/>ナレッジベース
+                            </h1>
+                            <p className="text-blue-200 text-xs mt-2 opacity-80">Daytime EMS Guide</p>
+                        </div>
+
+                        <div className="p-4 flex-1">
+                            <div className="mb-6">
+                                <p className="px-4 text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Menu</p>
+                                <nav className="space-y-1">
+                                    <button
+                                        onClick={() => { setMode('list'); setIsSidebarOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 rounded-lg flex items-center transition-colors
+                                        ${mode === 'list' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}
+                                        `}
+                                    >
+                                        <BookOpen className="w-5 h-5 mr-3" /> 一覧・検索
+                                    </button>
+                                    <button
+                                        onClick={() => { setMode('quiz'); setIsSidebarOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 rounded-lg flex items-center transition-colors
+                                        ${mode === 'quiz' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}
+                                        `}
+                                    >
+                                        <Award className="w-5 h-5 mr-3" /> クイズモード
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <div className="mb-6">
+                                <p className="px-4 text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Categories</p>
+                                <nav className="space-y-1">
+                                    {categories.map(cat => (
+                                        <CategoryButton 
+                                            key={cat.id} 
+                                            item={cat} 
+                                            active={activeCategory === cat.id && mode === 'list'} 
+                                            onClick={(id) => {
+                                                setActiveCategory(id);
+                                                setMode('list');
+                                                setIsSidebarOpen(false);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }} 
+                                        />
+                                    ))}
+                                </nav>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-100 text-xs text-slate-400 text-center">
+                            © 2024 Emergency Medical Service FAQ
+                        </div>
+                    </aside>
+
+                    {/* メインコンテンツエリア */}
+                    <main className="flex-1 w-full max-w-5xl mx-auto md:h-screen md:overflow-y-auto">
+                        {mode === 'quiz' ? (
+                            <QuizMode onExit={() => setMode('list')} />
+                        ) : (
+                            <div className="p-4 md:p-8 lg:p-12">
+                                
+                                {/* ヘッダーセクション */}
+                                <div className="mb-8">
+                                    <h2 className="text-3xl font-bold text-blue-900 mb-2 font-serif tracking-tight">
+                                        {currentCategoryLabel}
+                                    </h2>
+                                    <p className="text-slate-500">
+                                        {categories.find(c => c.id === activeCategory)?.desc}
+                                    </p>
+                                </div>
+
+                                {/* 検索バー */}
+                                <div className="relative mb-8 group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="キーワードで検索 (例: 育児, 時間帯, 課題...)"
+                                        className="block w-full pl-10 pr-3 py-3 border-2 border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* コンテンツリスト */}
+                                <div className="space-y-4 pb-20">
+                                    {filteredData.length > 0 ? (
+                                        filteredData.map(item => (
+                                            <FAQCard 
+                                                key={item.id} 
+                                                item={item} 
+                                                isOpen={openId === item.id}
+                                                onToggle={() => setOpenId(openId === item.id ? null : item.id)}
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
+                                            <p className="text-slate-400 mb-2">該当する項目が見つかりませんでした</p>
+                                            <button 
+                                                onClick={() => {setSearchTerm(''); setActiveCategory('all');}}
+                                                className="text-blue-600 font-bold hover:underline"
+                                            >
+                                                条件をクリアする
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* モバイル用オーバーレイ（サイドバーが開いている時） */}
+                    {isSidebarOpen && (
+                        <div 
+                            className="fixed inset-0 bg-black/50 z-0 md:hidden"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
