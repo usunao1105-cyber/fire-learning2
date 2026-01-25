@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偶発性低体温症 e-Learning</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts (Noto Sans JP & Serif) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        h1, h2, .font-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+        .animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 selection:bg-amber-500/30">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- アイコンコンポーネント (Lucide Reactの代替) ---
+        const IconBase = ({ children, className, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+                {children}
+            </svg>
+        );
+
+        const CheckCircle = (props) => (
+            <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></IconBase>
+        );
+        const XCircle = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></IconBase>
+        );
+        const AlertCircle = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></IconBase>
+        );
+        const RefreshCw = (props) => (
+            <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></IconBase>
+        );
+        const Award = (props) => (
+            <IconBase {...props}><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></IconBase>
+        );
+        const BookOpen = (props) => (
+            <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></IconBase>
+        );
+        const ShieldAlert = (props) => (
+            <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></IconBase>
+        );
+
+
+        // --- データセット (全50問) ---
+        const FULL_QUESTION_DATA = [
+            {
+                id: 1,
+                category: "第1章：基礎知識と定義",
+                question: "偶発性低体温症の定義となる深部体温は何度未満ですか？",
+                options: ["37.5℃", "36.0℃", "35.0℃", "32.0℃"],
+                correctIndex: 2,
+                explanation: "偶発性低体温症は、深部体温が意図せず35℃以下に低下した状態と定義されます。"
+            },
+            {
+                id: 2,
+                category: "第1章：基礎知識と定義",
+                question: "寒冷環境下で尿量が増える「寒冷利尿」が起こる主な生理学的理由はどれですか？",
+                options: ["寒さで膀胱が収縮するため", "末梢血管収縮により中心循環血液量が増加し、ADH（抗利尿ホルモン）が減少するため", "腎臓の血流が低下し、尿の濃縮ができなくなるため", "震えにより代謝水が増えるため"],
+                correctIndex: 1,
+                explanation: "寒冷刺激で末梢血管が収縮すると中心部の血液量が増えたと体が感知し、利尿作用が働きます。これにより脱水が進行しやすくなります。"
+            },
+            {
+                id: 3,
+                category: "第1章：基礎知識と定義",
+                question: "重度の低体温症で見られる「逆説的脱衣（Paradoxical undressing）」とはどのような行動ですか？",
+                options: ["寒さのために服を重ね着すること", "救助者に服を貸そうとすること", "極度の寒冷下で、暑いと錯覚して衣服を脱ぎ捨ててしまうこと", "震えが止まらなくなり服が脱げてしまうこと"],
+                correctIndex: 2,
+                explanation: "深部体温が低下し脳の体温調節中枢が麻痺すると、逆に「暑い」と誤認して服を脱いでしまう現象が起こることがあります（通常28℃未満などで見られる）。"
+            },
+            {
+                id: 4,
+                category: "第1章：基礎知識と定義",
+                question: "低体温症の傷病者を救出・加温した後に、深部体温がさらに低下する現象を何と呼びますか？",
+                options: ["リバウンド現象", "アフタードロップ（Afterdrop）", "ヒートショック", "サーマル・ラグ"],
+                correctIndex: 1,
+                explanation: "救出後や加温開始後に、冷たい末梢組織の血液が中心部に還流することや、物理的な熱伝導により、深部体温が一時的にさらに低下する現象です。"
+            },
+            {
+                id: 5,
+                category: "第1章：基礎知識と定義",
+                question: "低体温症の心電図変化として特徴的な波形はどれですか？",
+                options: ["デルタ波", "J波（オズボーン波）", "U波", "Q波"],
+                correctIndex: 1,
+                explanation: "QRS波の直後に見られる「上に凸の波形（J波）」は低体温症に特徴的であり、心室細動（VF）への移行リスクを示唆する重要なサインです。"
+            },
+            {
+                id: 6,
+                category: "第2章：重症度評価（ステージング）",
+                question: "改訂スイス式ステージングにおいて、Stage I（軽症）の特徴的な所見はどれですか？",
+                options: ["意識消失", "意識清明（Alert）で、震え（シバリング）がある", "震えの消失", "心停止"],
+                correctIndex: 1,
+                explanation: "Stage Iは深部体温が35～32℃程度で、体温を上げようとする「震え」があり、意識はしっかりしている状態です。"
+            },
+            {
+                id: 7,
+                category: "第2章：重症度評価（ステージング）",
+                question: "低体温症において「震え（シバリング）」が消失し始める体温の目安は何度ですか？",
+                options: ["35℃付近", "32℃付近", "28℃付近", "24℃付近"],
+                correctIndex: 1,
+                explanation: "体温が32℃を下回ると、エネルギーの枯渇や神経機能の低下により震えが消失し、意識レベルの低下が始まります（Stage IIへの移行）。"
+            },
+            {
+                id: 8,
+                category: "第2章：重症度評価（ステージング）",
+                question: "現場で正確な深部体温計がない場合、重症度を判断するために最も重視すべき指標はどれですか？",
+                options: ["傷病者の訴え", "皮膚の冷たさ", "意識レベル（AVPUやJCS）と震えの有無", "現場の気温"],
+                correctIndex: 2,
+                explanation: "意識レベルの低下と深部体温の低下は相関するため、最新の改訂スイス式では意識状態が重症度判定の重要な指標とされています。"
+            },
+            {
+                id: 9,
+                category: "第2章：重症度評価（ステージング）",
+                question: "救急現場で使用する体温計として、低体温症の測定に「適さない」とされるのはどれですか？",
+                options: ["食道温計", "直腸温計", "赤外線皮膚体温計（非接触型など）", "膀胱温計"],
+                correctIndex: 2,
+                explanation: "皮膚表面や腋窩温は環境温度や末梢血管収縮の影響を強く受けるため、深部体温を正確に反映せず、低体温症を見逃す原因となります。"
+            },
+            {
+                id: 10,
+                category: "第2章：重症度評価（ステージング）",
+                question: "搬送中の観察において、最も注意すべき不整脈はどれですか？",
+                options: ["洞性徐脈", "心房細動", "心室細動（VF）", "1度房室ブロック"],
+                correctIndex: 2,
+                explanation: "低体温（特に28℃以下）では心筋の易刺激性が高まり、些細な刺激で致死的な心室細動（VF）に移行しやすいためです。"
+            },
+            {
+                id: 11,
+                category: "第3章：現場活動と処置",
+                question: "低体温症傷病者の脈拍確認において、推奨される時間はどれですか？",
+                options: ["10秒以内", "30秒以内", "30秒～60秒", "2分以上"],
+                correctIndex: 2,
+                explanation: "極度の徐脈や微弱な脈拍を見逃して不必要なCPRを開始すると、VFを誘発する恐れがあるため、通常より時間をかけて慎重に確認します。"
+            },
+            {
+                id: 12,
+                category: "第3章：現場活動と処置",
+                question: "救助活動中に急激な心停止や循環虚脱が起きる「レスキュー・コラップス」を防ぐための最優先事項はどれですか？",
+                options: ["とにかく急いで搬送する", "全身を強くマッサージする", "傷病者を水平に保ち、極めて愛護的に扱う", "足を高く上げてショック体位をとる"],
+                correctIndex: 2,
+                explanation: "体位変換や粗雑な扱いは、冷たい血液の心臓への還流（アフタードロップ）を招き、VFを誘発する原因となります。"
+            },
+            {
+                id: 13,
+                category: "第3章：現場活動と処置",
+                question: "病院前で加温を行う場合、湯たんぽ等を配置するのに最も適切な部位はどこですか？",
+                options: ["足先と手先", "体幹部（胸部、腋窩）", "頭部のみ", "ふくらはぎ"],
+                correctIndex: 1,
+                explanation: "末梢を温めると血管が拡張し、アフタードロップや復温ショックを助長するため、中心部である体幹への加温が優先されます。"
+            },
+            {
+                id: 14,
+                category: "第3章：現場活動と処置",
+                question: "濡れた衣服の除去について、最も適切な方法はどれですか？",
+                options: ["そのままにして毛布でくるむ", "体を動かして脱がせる", "体を動かさないよう、衣服を裁断（カット）して除去する", "濡れていても保温効果はあるので脱がせない"],
+                correctIndex: 2,
+                explanation: "濡れた衣服は体温を奪い続けますが、脱がすために体を動かすとレスキュー・コラップスの危険があるため、裁断して除去するのが原則です。"
+            },
+            {
+                id: 15,
+                category: "第3章：現場活動と処置",
+                question: "低体温症の傷病者を「歩かせる」ことのリスクとして正しいものはどれですか？",
+                options: ["体温が上がりすぎてしまう", "筋ポンプ作用により冷たい血液が心臓に戻り、心停止を誘発する", "筋肉が断裂する", "特にリスクはない"],
+                correctIndex: 1,
+                explanation: "軽症に見えても、歩行させることでアフタードロップが起き、容態が急変する可能性があるため、原則として安静搬送が必要です。"
+            },
+            {
+                id: 16,
+                category: "第4章：心肺蘇生（CPR）と高度な処置",
+                question: "低体温症（深部体温30℃未満）による心停止において、電気ショック（除細動）の実施回数制限として正しいものは？",
+                options: ["通常通り何度でも行う", "1回（または最大3回）行い、反応がなければ30℃になるまで保留する", "絶対に行ってはならない", "エネルギーを通常の倍にして行う"],
+                correctIndex: 1,
+                explanation: "30℃未満の心臓は電気ショックに反応しにくく、繰り返しの通電は心筋損傷を招くため、復温を優先しショックは制限します。"
+            },
+            {
+                id: 17,
+                category: "第4章：心肺蘇生（CPR）と高度な処置",
+                question: "低体温症（30℃未満）の心停止におけるアドレナリン投与について、ガイドライン（JRC/AHA）の推奨は？",
+                options: ["3分ごとに投与する", "原則として投与しない（または間隔を大幅に空ける）", "2倍量を投与する", "点滴ではなく筋肉注射で行う"],
+                correctIndex: 1,
+                explanation: "代謝が低下しているため薬剤が蓄積し、復温後に中毒濃度になる危険があるため、30℃以上になるまでは投与を控えるのが一般的です。"
+            },
+            {
+                id: 18,
+                category: "第4章：心肺蘇生（CPR）と高度な処置",
+                question: "山岳救助等で持続的な胸骨圧迫が不可能な場合、28℃未満の傷病者に対し検討される「間欠的CPR」の手順は？",
+                options: ["30分CPRを行い、30分休む", "5分間CPRを行い、5分間以内に搬送（CPR休止）する", "人工呼吸のみ継続する", "心拍再開まで現場を動かない"],
+                correctIndex: 1,
+                explanation: "重度低体温では代謝が抑制されているため、搬送を優先するためにCPRを一時中断する「間欠的CPR」が例外的に許容されています。"
+            },
+            {
+                id: 19,
+                category: "第4章：心肺蘇生（CPR）と高度な処置",
+                question: "現場で低体温症傷病者の「死亡」を判定できる条件として正しいものはどれですか？",
+                options: ["瞳孔が散大している", "死後硬直様の関節硬直がある", "体幹が氷のように硬く凍結し、胸骨圧迫が不可能な場合", "脈拍が1分間触れない場合"],
+                correctIndex: 2,
+                explanation: "低体温症では「温まるまで死んでいない」が原則ですが、体幹の完全凍結や致死的外傷（切断等）がある場合は蘇生不能と判断されます。"
+            },
+            {
+                id: 20,
+                category: "第4章：心肺蘇生（CPR）と高度な処置",
+                question: "低体温症による心停止患者の搬送先として、最も適切な医療機関はどこですか？",
+                options: ["最寄りの一次救急病院", "ECLS（PCPS/ECMO）が可能な救命救急センター", "循環器専門病院（カテーテルのみ）", "外科診療所"],
+                correctIndex: 1,
+                explanation: "体外循環（ECLS）は、心肺機能を代行しながら急速に復温できる唯一の手段であり、重症低体温症の生存率を劇的に向上させます。"
+            },
+            {
+                id: 21,
+                category: "第5章：特殊な状況（雪崩・水難）",
+                question: "雪崩埋没において、窒息による死亡率が急増するため、迅速な救出が求められる時間の目安は？",
+                options: ["15分", "35分", "60分", "90分"],
+                correctIndex: 1,
+                explanation: "埋没後35分までは生存率が高いですが、それを過ぎると窒息により生存率が急激に低下します。35分以内の救出では気道確保が最優先です。"
+            },
+            {
+                id: 22,
+                category: "第5章：特殊な状況（雪崩・水難）",
+                question: "雪崩埋没時間が長く（60分以上）、心停止状態で救出されたが、口元に「エアポケット」があった場合の対応は？",
+                options: ["死亡と判断する", "低体温症による代謝抑制の可能性があり、蘇生を開始し搬送する", "その場で温まるまで待機する", "人工呼吸のみ行う"],
+                correctIndex: 1,
+                explanation: "気道が確保されていれば、低体温による脳保護効果で蘇生できる可能性があるため、ECLS施設への搬送を試みます。"
+            },
+            {
+                id: 23,
+                category: "第5章：特殊な状況（雪崩・水難）",
+                question: "水難事故（溺水）において、低体温症の進行が空気中より速い理由は？",
+                options: ["水圧がかかるため", "水の熱伝導率が空気の約25倍であるため", "パニックになるため", "呼吸が止まるため"],
+                correctIndex: 1,
+                explanation: "水は空気よりも熱を非常に効率よく奪うため、短時間で重度の低体温症に陥ります。"
+            },
+            {
+                id: 24,
+                category: "第5章：特殊な状況（雪崩・水難）",
+                question: "凍傷の疑いがある部位への現場処置として「やってはいけないこと」はどれですか？",
+                options: ["濡れた手袋を脱がせる", "雪や手で患部をこする（マッサージする）", "緩やかに保護する", "再凍結の恐れがあるなら解凍しない"],
+                correctIndex: 1,
+                explanation: "凍結した組織をこすると細胞が破壊され、損傷が悪化するため厳禁です。また、再凍結のリスクがある場所での解凍も避けます。"
+            },
+            {
+                id: 25,
+                category: "第5章：特殊な状況（雪崩・水難）",
+                question: "低体温症の傷病者に輸液を行う場合、遵守すべき条件はどれですか？",
+                options: ["冷たい輸液で脳を保護する", "38～42℃に加温した輸液を使用する", "ブドウ糖を含まない液にする", "輸液は絶対に行ってはならない"],
+                correctIndex: 1,
+                explanation: "常温の輸液でも体温を奪うため、加温輸液が必須です。また、寒冷利尿や血管拡張によるショックを防ぐために輸液は重要です。"
+            },
+            {
+                id: 26,
+                category: "第6章：復温と合併症",
+                question: "急激な復温によって末梢血管が拡張し、血圧が低下する現象を何と呼びますか？",
+                options: ["アフタードロップ", "復温ショック（Rewarming shock）", "クラッシュ症候群", "熱中症"],
+                correctIndex: 1,
+                explanation: "復温により血管が広がると、相対的な循環血液量不足となり、ショック状態に陥ることがあります。"
+            },
+            {
+                id: 27,
+                category: "第6章：復温と合併症",
+                question: "病院前救護における「低体温症ラッピング（The Burrito）」の3層構造に含まれないものは？",
+                options: ["蒸散防止層（ビニール等）", "保温層（毛布・シュラフ）", "冷却層（氷嚢）", "防風・防水層（タープ等）"],
+                correctIndex: 2,
+                explanation: "ラッピングは「蒸散防止」「保温」「外気遮断」の層で作ります。冷却は行いません。"
+            },
+            {
+                id: 28,
+                category: "第6章：復温と合併症",
+                question: "低体温症傷病者の搬送時、救急車内の推奨温度は？",
+                options: ["18℃程度", "24℃以上（可能な限り暖かく）", "10℃以下", "規定はない"],
+                correctIndex: 1,
+                explanation: "さらなる熱喪失を防ぐため、車内は十分に暖房を効かせる必要があります。"
+            },
+            {
+                id: 29,
+                category: "第6章：復温と合併症",
+                question: "低体温症において、血清カリウム値（K値）が12 mEq/L以上の場合、何を示唆しますか？",
+                options: ["腎機能が正常であること", "細胞死が進行しており、蘇生が困難であること", "すぐに回復すること", "脱水がないこと"],
+                correctIndex: 1,
+                explanation: "高カリウム血症（特に10-12以上）は、低体温になる前の窒息や細胞壊死を示唆し、蘇生中止の判断基準の一つとなります。"
+            },
+            {
+                id: 30,
+                category: "第6章：復温と合併症",
+                question: "低体温症患者の血糖値の傾向として正しいものは？",
+                options: ["常に正常である", "常に高血糖である", "初期は高血糖、枯渇すると低血糖になる", "常に低血糖である"],
+                correctIndex: 2,
+                explanation: "初期はカテコラミン放出で血糖が上がりますが、震えでグリコーゲンを使い果たすと低血糖になり、意識障害を助長します。"
+            },
+            {
+                id: 31,
+                category: "第7章：現場判断とプロトコル",
+                question: "意識清明で震えがある（Stage I）傷病者への対応で、誤っているのは？",
+                options: ["濡れた服を着替えさせる", "温かい甘い飲み物を与える", "アルコールを飲ませて体を温める", "風をよける場所に移動する"],
+                correctIndex: 2,
+                explanation: "アルコールは血管を拡張させ熱喪失を早めるほか、利尿作用で脱水を助長するため、低体温症には禁忌です。"
+            },
+            {
+                id: 32,
+                category: "第7章：現場判断とプロトコル",
+                question: "複数の傷病者がいる場合、トリアージにおいて「赤（最優先）」となる低体温症の所見は？",
+                options: ["震えがあり、歩ける", "意識障害がある、または深部体温28℃未満", "手足が冷たいだけ", "会話が普通にできる"],
+                correctIndex: 1,
+                explanation: "意識障害や循環動態不安定な状態は、心停止の切迫を示唆するため最優先で搬送・処置が必要です。"
+            },
+            {
+                id: 33,
+                category: "第7章：現場判断とプロトコル",
+                question: "現場で「死戦期呼吸」が見られた場合、どう判断すべきですか？",
+                options: ["呼吸があるので様子を見る", "心停止とみなし、直ちにCPRを開始する", "過呼吸として扱う", "脈拍がしっかりある証拠とする"],
+                correctIndex: 1,
+                explanation: "死戦期呼吸は心停止直後に見られる現象であり、有効な呼吸ではないため、CPRの適応となります。"
+            },
+            {
+                id: 34,
+                category: "第7章：現場判断とプロトコル",
+                question: "低体温症の傷病者に対して、気管挿管などの高度な気道確保を行う際の注意点は？",
+                options: ["素早く行うためなら多少乱暴でもよい", "愛護的に行い、不整脈の誘発に注意する", "絶対に行ってはならない", "食道閉鎖式エアウェイしか使えない"],
+                correctIndex: 1,
+                explanation: "気道刺激は不整脈を誘発する可能性がありますが、酸素化のメリットが上回る場合は、愛護的に実施することが推奨されます。"
+            },
+            {
+                id: 35,
+                category: "第7章：現場判断とプロトコル",
+                question: "低体温症からの蘇生を目指す格言「No one is dead until...」の続きは？",
+                options: ["... doctor says so.", "... sun rises.", "... warm and dead.（温まるまでは死んでいない）", "... family arrives."],
+                correctIndex: 2,
+                explanation: "低体温下では脳が保護されているため、体温を戻すまでは蘇生を諦めてはいけないという原則です。"
+            },
+            {
+                id: 36,
+                category: "第8章：小児・高齢者・その他",
+                question: "高齢者が室内で低体温症になりやすい理由として、適切でないものは？",
+                options: ["温度を感じる感覚が鈍い", "基礎代謝（熱産生）が低い", "皮下脂肪が極端に厚いため", "栄養不良や持病があるため"],
+                correctIndex: 2,
+                explanation: "高齢者は皮下脂肪が少なく、断熱効果が低いため熱を失いやすいのが特徴です。また温度感覚の低下も要因です。"
+            },
+            {
+                id: 37,
+                category: "第8章：小児・高齢者・その他",
+                question: "小児の低体温症の特徴として正しいものは？",
+                options: ["大人より冷えにくい", "体表面積が大きいため、熱を失うのが速い", "震えが起きない", "回復する可能性が大人より低い"],
+                correctIndex: 1,
+                explanation: "小児は体重あたりの体表面積が大きく、熱喪失が速いですが、蘇生後の回復可能性は大人より高い傾向があります。"
+            },
+            {
+                id: 38,
+                category: "第8章：小児・高齢者・その他",
+                question: "アルコール中毒患者が低体温症になりやすい生理学的理由は？",
+                options: ["血管が収縮するため", "血管が拡張し熱が逃げる上、判断力が低下するため", "震えが止まらなくなるため", "基礎代謝が上がるため"],
+                correctIndex: 1,
+                explanation: "アルコールは末梢血管を拡張させ熱放散を増やすとともに、中枢神経抑制により寒さへの対処行動を遅らせます。"
+            },
+            {
+                id: 39,
+                category: "第8章：小児・高齢者・その他",
+                question: "低体温症の初期対応における「ABCDEアプローチ」の「E」は何を指しますか？",
+                options: ["Energy（エネルギー補給）", "Exposure/Environment（脱衣と環境管理・保温）", "ECG（心電図）", "Emergency（緊急搬送）"],
+                correctIndex: 1,
+                explanation: "外傷や低体温症の評価においてEは「Exposure（曝露・全身観察）」と「Environment（環境調整・保温）」を指します。"
+            },
+            {
+                id: 40,
+                category: "第8章：小児・高齢者・その他",
+                question: "低体温症の予防において、衣類の「レイヤリング（重ね着）」で最も外側に着るべき素材は？",
+                options: ["吸汗速乾素材", "フリースなどの保温素材", "防風・防水素材", "綿（コットン）素材"],
+                correctIndex: 2,
+                explanation: "風や雨による熱喪失を防ぐため、一番外側（アウター）は防風・防水性のあるものを着用します。"
+            },
+            {
+                id: 41,
+                category: "第9章：総合・応用問題",
+                question: "低体温症患者の搬送中、機械的胸骨圧迫装置（LUCAS等）の使用が推奨される理由は？",
+                options: ["救急車内を暖めるため", "長時間の搬送でも質の高い圧迫を継続し、隊員の安全も確保できるため", "患者の体温を上げるため", "脈拍を測定するため"],
+                correctIndex: 1,
+                explanation: "低体温症の蘇生は長時間に及ぶことが多く、揺れる車内での安定した循環維持に機械的装置が有効です。"
+            },
+            {
+                id: 42,
+                category: "第9章：総合・応用問題",
+                question: "偶発性低体温症の予後予測スコアとして使用される「HOPEスコア」が評価する項目に含まれないのは？",
+                options: ["年齢", "性別", "カリウム値", "直前の食事内容", "CPR時間"],
+                correctIndex: 3,
+                explanation: "HOPEスコアは年齢、性別、低体温の原因、目撃の有無、CPR時間、カリウム値などから生存確率を予測するものです。"
+            },
+            {
+                id: 43,
+                category: "第9章：総合・応用問題",
+                question: "災害時や避難所での低体温症対策として正しいものは？",
+                options: ["寒い人は一人で寝かせる", "段ボールや新聞紙を敷いて地面からの冷えを防ぐ", "換気のために窓を全開にする", "水分は控える"],
+                correctIndex: 1,
+                explanation: "伝導による熱喪失を防ぐため、床に断熱材を敷くことが重要です。また、身を寄せ合って温めることも有効です。"
+            },
+            {
+                id: 44,
+                category: "第9章：総合・応用問題",
+                question: "低体温症の傷病者に対し、中心静脈カテーテルを挿入する際のリスクは？",
+                options: ["出血が止まらなくなる", "カテーテル先端の刺激で不整脈（VF）を誘発する", "体温が下がる", "感染しやすくなる"],
+                correctIndex: 1,
+                explanation: "低体温の心臓は機械的刺激に敏感なため、カテーテルやガイドワイヤーが心内膜に触れると致死的不整脈を起こすリスクがあります。"
+            },
+            {
+                id: 45,
+                category: "第9章：総合・応用問題",
+                question: "「二次性低体温症」の原因として考えられる疾患はどれですか？",
+                options: ["骨折", "甲状腺機能低下症（粘液水腫）", "高血圧", "虫垂炎"],
+                correctIndex: 1,
+                explanation: "甲状腺機能低下症や副腎不全などの内分泌疾患は、熱産生能力を低下させ、寒冷環境でなくても低体温症を引き起こす原因となります。"
+            },
+            {
+                id: 46,
+                category: "第9章：総合・応用問題",
+                question: "登山中に低体温症を防ぐための「行動食」として適している栄養素は？",
+                options: ["脂質（消化に時間がかかる）", "炭水化物（速やかに熱エネルギーになる）", "たんぱく質", "食物繊維"],
+                correctIndex: 1,
+                explanation: "炭水化物は消化吸収が早く、震え（熱産生）のための即効性あるエネルギー源となります。"
+            },
+            {
+                id: 47,
+                category: "第9章：総合・応用問題",
+                question: "低体温症の搬送連絡（セカンドコール）で伝えるべき「MIST」の「T」は何ですか？",
+                options: ["Temperature（体温）", "Time（時間）", "Treatment（行った処置）", "Transport（搬送手段）"],
+                correctIndex: 2,
+                explanation: "MISTはMechanism（受傷機転）、Injury（損傷・症状）、Signs（バイタルサイン）、Treatment（処置）の略で、病院への引継ぎに用いられます。"
+            },
+            {
+                id: 48,
+                category: "第9章：総合・応用問題",
+                question: "低体温症の傷病者が「意識はあるが、ろれつが回らない」状態の時、想定されるステージは？",
+                options: ["Stage I（軽症）", "Stage II（中等度）", "Stage III（高度）", "Stage IV（重篤）"],
+                correctIndex: 1,
+                explanation: "構音障害（ろれつが回らない）や意識の変容は、体温が32℃を下回りStage IIに入った際の特徴的な神経症状です。"
+            },
+            {
+                id: 49,
+                category: "第9章：総合・応用問題",
+                question: "低体温症と凍傷が合併している場合、優先すべき処置は？",
+                options: ["凍傷の急速解凍", "全身の低体温症の治療", "凍傷部位のマッサージ", "鎮痛薬の投与"],
+                correctIndex: 1,
+                explanation: "生命に関わるのは低体温症（全身）であり、凍傷（局所）の処置よりも、まずは全身の保温・加温と救命を優先します。"
+            },
+            {
+                id: 50,
+                category: "第9章：総合・応用問題",
+                question: "救急隊員が現場で低体温症対応を行う際、最も基本的かつ重要な心構えは？",
+                options: ["スピード重視で多少手荒でも急ぐ", "「愛護的な活動」と「自分自身の安全管理（二次遭難防止）」", "現場での完全な復温を目指す", "体温計の数値だけを信じる"],
+                correctIndex: 1,
+                explanation: "傷病者への愛護的な扱いはVF予防に不可欠であり、同時に救助者自身が低体温にならないよう装備と安全を確保することが活動の前提です。"
+            }
+        ];
+
+        // --- ユーティリティ ---
+        const getRandomQuestions = (allQuestions, count = 5) => {
+            const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        };
+
+        function App() {
+            const [questions, setQuestions] = useState([]);
+            const [userAnswers, setUserAnswers] = useState({});
+            const [isSubmitted, setIsSubmitted] = useState(false);
+            const [score, setScore] = useState(0);
+
+            useEffect(() => {
+                loadNewQuestions();
+            }, []);
+
+            const loadNewQuestions = () => {
+                const selected = getRandomQuestions(FULL_QUESTION_DATA, 5);
+                setQuestions(selected);
+                setUserAnswers({});
+                setIsSubmitted(false);
+                setScore(0);
+                window.scrollTo(0, 0);
+            };
+
+            const handleSelectOption = (questionId, optionIndex) => {
+                if (isSubmitted) return;
+                setUserAnswers(prev => ({
+                    ...prev,
+                    [questionId]: optionIndex
+                }));
+            };
+
+            const handleSubmit = () => {
+                let calculatedScore = 0;
+                questions.forEach(q => {
+                    if (userAnswers[q.id] === q.correctIndex) {
+                        calculatedScore++;
+                    }
+                });
+                setScore(calculatedScore);
+                setIsSubmitted(true);
+                window.scrollTo(0, 0);
+            };
+
+            const getScoreMessage = (score) => {
+                if (score === 5) return "極めて優秀です。正確な知識をお持ちです。";
+                if (score >= 3) return "合格点です。さらに知識を深めましょう。";
+                return "復習が必要です。解説を確認してください。";
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-amber-500/30">
+                    {/* Header */}
+                    <header className="bg-slate-950 border-b border-amber-600/30 shadow-lg sticky top-0 z-50">
+                        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-amber-600 p-2 rounded-lg shadow-inner">
+                                    <ShieldAlert className="w-6 h-6 text-slate-900" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold tracking-wider text-amber-500 font-serif">
+                                        偶発性低体温症 e-Learning
+                                    </h1>
+                                    <p className="text-xs text-slate-400">Professional Firefighter Training Module</p>
+                                </div>
+                            </div>
+                            <div className="hidden md:block text-sm text-slate-400">
+                                <span className="text-amber-500 font-bold">{FULL_QUESTION_DATA.length}</span> 問のデータベースから
+                                <span className="text-amber-500 font-bold"> 5</span> 問を出題
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-4xl mx-auto px-6 py-8">
+                        
+                        {/* 結果表示エリア */}
+                        {isSubmitted && (
+                            <div className="mb-8 p-6 bg-slate-800/50 border border-amber-500/40 rounded-xl shadow-2xl backdrop-blur-sm animate-fade-in">
+                                <div className="flex flex-col md:flex-row items-center gap-6">
+                                    <div className="flex-shrink-0 relative">
+                                        <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20 rounded-full"></div>
+                                        <div className="relative bg-slate-900 border-4 border-amber-500 w-32 h-32 rounded-full flex items-center justify-center shadow-lg">
+                                            <div className="text-center">
+                                                <div className="text-3xl font-bold text-white">{score} / 5</div>
+                                                <div className="text-xs text-amber-500 uppercase tracking-widest mt-1">Score</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 text-center md:text-left">
+                                        <h2 className="text-2xl font-bold text-white mb-2 font-serif">
+                                            {score === 5 ? "Excellent Result" : "Training Completed"}
+                                        </h2>
+                                        <p className="text-slate-300 mb-4">{getScoreMessage(score)}</p>
+                                        <button 
+                                            onClick={loadNewQuestions}
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold rounded-lg transition-all shadow-lg hover:shadow-amber-500/20 active:scale-95"
+                                        >
+                                            <RefreshCw className="w-5 h-5" />
+                                            再挑戦する
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 問題リスト */}
+                        <div className="space-y-8">
+                            {questions.map((q, index) => {
+                                const userAnswer = userAnswers[q.id];
+                                const isCorrect = isSubmitted && userAnswer === q.correctIndex;
+                                const isWrong = isSubmitted && userAnswer !== undefined && userAnswer !== q.correctIndex;
+                                
+                                return (
+                                    <div 
+                                        key={q.id} 
+                                        className={`group relative bg-slate-800 rounded-xl border transition-all duration-300 overflow-hidden
+                                            ${isSubmitted 
+                                                ? (isCorrect ? 'border-emerald-500/50 shadow-emerald-900/20' : 'border-rose-500/50 shadow-rose-900/20') 
+                                                : 'border-slate-700 hover:border-slate-600 shadow-xl'}`}
+                                    >
+                                        {/* 章カテゴリーラベル */}
+                                        <div className="px-6 py-2 bg-slate-950/50 border-b border-slate-700/50 flex justify-between items-center">
+                                            <span className="text-xs font-semibold text-amber-500/80 tracking-widest uppercase">
+                                                Question {index + 1}
+                                            </span>
+                                            <span className="text-xs text-slate-500 truncate max-w-[200px]">{q.category}</span>
+                                        </div>
+
+                                        <div className="p-6 md:p-8">
+                                            <h3 className="text-lg md:text-xl font-medium text-slate-100 mb-6 leading-relaxed">
+                                                {q.question}
+                                            </h3>
+
+                                            <div className="space-y-3">
+                                                {q.options.map((option, optIndex) => {
+                                                    // 選択状態の判定スタイル
+                                                    let optionStyle = "border-slate-700 bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500"; // デフォルト
+                                                    
+                                                    if (isSubmitted) {
+                                                        if (optIndex === q.correctIndex) {
+                                                            optionStyle = "border-emerald-500 bg-emerald-900/30 text-emerald-100"; // 正解の表示
+                                                        } else if (optIndex === userAnswer) {
+                                                            optionStyle = "border-rose-500 bg-rose-900/30 text-rose-100"; // 誤答の表示
+                                                        } else {
+                                                            optionStyle = "border-slate-800 bg-slate-800/50 text-slate-500 opacity-50"; // その他
+                                                        }
+                                                    } else {
+                                                        if (userAnswer === optIndex) {
+                                                            optionStyle = "border-amber-500 bg-amber-900/20 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.1)]"; // 選択中
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <button
+                                                            key={optIndex}
+                                                            onClick={() => handleSelectOption(q.id, optIndex)}
+                                                            disabled={isSubmitted}
+                                                            className={`w-full text-left p-4 rounded-lg border flex items-center gap-4 transition-all duration-200 ${optionStyle}`}
+                                                        >
+                                                            <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                                                                ${isSubmitted && optIndex === q.correctIndex ? 'border-emerald-500 bg-emerald-500 text-slate-900' : 
+                                                                isSubmitted && optIndex === userAnswer ? 'border-rose-500 bg-rose-500 text-white' :
+                                                                userAnswer === optIndex ? 'border-amber-500 bg-amber-500 text-slate-900' : 
+                                                                'border-slate-600'}`}
+                                                            >
+                                                                {isSubmitted && optIndex === q.correctIndex && <CheckCircle className="w-4 h-4" />}
+                                                                {isSubmitted && optIndex === userAnswer && optIndex !== q.correctIndex && <XCircle className="w-4 h-4" />}
+                                                            </div>
+                                                            <span className="text-sm md:text-base">{option}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* 解説エリア（採点後のみ表示） */}
+                                            {isSubmitted && (
+                                                <div className="mt-6 pt-6 border-t border-slate-700/50 animate-fade-in-up">
+                                                    <div className="flex items-start gap-3">
+                                                        <BookOpen className="w-5 h-5 text-amber-500 flex-shrink-0 mt-1" />
+                                                        <div>
+                                                            <p className="text-sm font-bold text-amber-500 mb-1">解説</p>
+                                                            <p className="text-slate-300 text-sm leading-relaxed">{q.explanation}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* アクションエリア */}
+                        {!isSubmitted && (
+                            <div className="mt-12 text-center pb-12">
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={Object.keys(userAnswers).length < 5}
+                                    className={`group px-10 py-4 rounded-full text-lg font-bold tracking-wide transition-all duration-300 shadow-2xl flex items-center justify-center mx-auto gap-3
+                                        ${Object.keys(userAnswers).length < 5 
+                                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed grayscale opacity-70' 
+                                            : 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-900 scale-100 hover:scale-105 shadow-amber-900/20'}`}
+                                >
+                                    <Award className="w-6 h-6" />
+                                    <span>採点する</span>
+                                </button>
+                                {Object.keys(userAnswers).length < 5 && (
+                                    <p className="mt-4 text-slate-500 text-sm">全ての質問に回答してください ({Object.keys(userAnswers).length}/5)</p>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className="bg-slate-950 text-slate-600 py-8 text-center text-xs border-t border-slate-900">
+                        <p>© 2026 Fire Service Training Division. All Rights Reserved.</p>
+                        <p className="mt-2">Based on AHA 2025 / JRC 2020 Guidelines</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
